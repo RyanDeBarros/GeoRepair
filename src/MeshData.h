@@ -15,5 +15,7 @@ public:
 	bool save(const char* filename);
 
 	const decltype(V)& get_vertices() const { return V; }
+	decltype(V)& get_vertices() { return V; }
 	const decltype(F)& get_faces() const { return F; }
+	decltype(F)& get_faces() { return F; }
 };
