@@ -72,6 +72,7 @@ void defects::DegenerateFaces::repair(MeshData& mesh)
 	remove_rows(vertices, remove_vertex_indices, vmax_block_height, false);
 	// TODO iterate through all faces and remove those that have duplicate vertex indices
 	reindex_faces(faces, remove_vertex_indices);
+	reset();
 }
 
 void defects::DegenerateFaces::reset()

@@ -15,7 +15,10 @@ void defects::NullFaces::detect(const MeshData& mesh)
 void defects::NullFaces::repair(MeshData& mesh)
 {
 	if (in_detected_state())
+	{
 		remove_rows(mesh.get_faces(), null_face_indices, maximum_block_height, true);
+		reset();
+	}
 }
 
 void defects::NullFaces::reset()

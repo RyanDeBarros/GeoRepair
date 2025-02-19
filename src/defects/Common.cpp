@@ -29,6 +29,11 @@ void remove_rows(Eigen::MatrixXi& mat, std::vector<Eigen::Index>& indices, Eigen
 	mat.conservativeResize(mat.rows() - indices.size(), mat.cols());
 }
 
+void remove_rows(Eigen::MatrixXi& mat, std::vector<Eigen::Index>& indices, bool indices_sorted)
+{
+	remove_rows(mat, indices, mat.rows() - indices.size(), indices_sorted);
+}
+
 void remove_rows_setup(const Eigen::MatrixXi& mat, std::vector<Eigen::Index>& indices, Eigen::Index& maximum_block_height, const std::function<bool(Eigen::Index)>& remove_row_predicate)
 {
 	indices.clear();
@@ -75,6 +80,11 @@ void remove_rows(Eigen::MatrixXd& mat, std::vector<Eigen::Index>& indices, Eigen
 		new_starting_row += num_rows;
 	}
 	mat.conservativeResize(mat.rows() - indices.size(), mat.cols());
+}
+
+void remove_rows(Eigen::MatrixXd& mat, std::vector<Eigen::Index>& indices, bool indices_sorted)
+{
+	remove_rows(mat, indices, mat.rows() - indices.size(), indices_sorted);
 }
 
 void remove_rows_setup(const Eigen::MatrixXd& mat, std::vector<Eigen::Index>& indices, Eigen::Index& maximum_block_height, const std::function<bool(Eigen::Index)>& remove_row_predicate)

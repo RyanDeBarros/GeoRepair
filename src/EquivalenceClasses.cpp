@@ -38,6 +38,11 @@ void EquivalenceClasses::clear()
 	rank.clear();
 }
 
+bool EquivalenceClasses::empty() const
+{
+	return parent.empty();
+}
+
 void EquivalenceClasses::add(const std::vector<Eigen::Index>& group)
 {
 	for (size_t i = 0; i < group.size(); ++i)
@@ -46,6 +51,13 @@ void EquivalenceClasses::add(const std::vector<Eigen::Index>& group)
 		if (i > 0)
 			unite(group[i], group[i - 1]);
 	}
+}
+
+void EquivalenceClasses::add(Eigen::Index x, Eigen::Index y)
+{
+	make_set(x);
+	make_set(y);
+	unite(x, y);
 }
 
 std::unordered_map<Eigen::Index, std::unordered_set<Eigen::Index>> EquivalenceClasses::gen_classes()

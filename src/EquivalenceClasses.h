@@ -16,6 +16,8 @@ class EquivalenceClasses
 
 public:
 	void clear();
+	bool empty() const;
 	void add(const std::vector<Eigen::Index>& group);
+	void add(Eigen::Index x, Eigen::Index y);
 	std::unordered_map<Eigen::Index, std::unordered_set<Eigen::Index>> gen_classes();
 };

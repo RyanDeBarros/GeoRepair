@@ -15,7 +15,10 @@ void defects::DuplicateFaces::detect(const MeshData& mesh)
 void defects::DuplicateFaces::repair(MeshData& mesh)
 {
 	if (in_detected_state())
+	{
 		remove_rows(mesh.get_faces(), duplicate_face_indices, maximum_block_height, true);
+		reset();
+	}
 }
 
 void defects::DuplicateFaces::reset()
