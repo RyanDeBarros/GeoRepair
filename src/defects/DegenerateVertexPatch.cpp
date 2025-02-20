@@ -3,7 +3,7 @@
 void defects::DegenerateVertexPatch::detect(const MeshData& mesh)
 {
 	reset();
-	double sqrd_threshold = threshold * threshold;
+	double sqrd_tolerance = tolerance * tolerance;
 	const auto& vertices = mesh.get_vertices();
 	std::unordered_set<Eigen::Index> already_processed;
 	for (Eigen::Index i = 0; i < vertices.rows(); ++i)
@@ -13,7 +13,7 @@ void defects::DegenerateVertexPatch::detect(const MeshData& mesh)
 		const auto& neighbourhood = mesh.get_adj_vertices(i);
 		for (Eigen::Index j : neighbourhood)
 		{
-			if (!already_processed.count(j) && (vertices.row(j) - vi).squaredNorm() <= sqrd_threshold)
+			if (!already_processed.count(j) && (vertices.row(j) - vi).squaredNorm() <= sqrd_tolerance)
 				vertex_clusters.add(i, j);
 		}
 	}

@@ -49,7 +49,10 @@ void remove_rows_setup(const Eigen::MatrixXi& mat, std::vector<Eigen::Index>& in
 			indices.push_back(i);
 		}
 	}
-	maximum_block_height = std::max(maximum_block_height, mat.rows() - indices.back() - 1);
+	if (indices.empty())
+		maximum_block_height = mat.rows();
+	else
+		maximum_block_height = std::max(maximum_block_height, mat.rows() - indices.back() - 1);
 }
 
 void remove_rows(Eigen::MatrixXi& mat, const std::function<bool(Eigen::Index)>& remove_row_predicate)
@@ -102,7 +105,10 @@ void remove_rows_setup(const Eigen::MatrixXd& mat, std::vector<Eigen::Index>& in
 			indices.push_back(i);
 		}
 	}
-	maximum_block_height = std::max(maximum_block_height, mat.rows() - indices.back() - 1);
+	if (indices.empty())
+		maximum_block_height = mat.rows();
+	else
+		maximum_block_height = std::max(maximum_block_height, mat.rows() - indices.back() - 1);
 }
 
 void remove_rows(Eigen::MatrixXd& mat, const std::function<bool(Eigen::Index)>& remove_row_predicate)

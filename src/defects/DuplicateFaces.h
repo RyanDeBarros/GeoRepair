@@ -16,6 +16,8 @@ namespace defects
 		Eigen::Index maximum_block_height = 0;
 
 	public:
+		bool ignore_normals = false;
+
 		const decltype(duplicate_face_indices)& get_duplicate_face_indices() const { return duplicate_face_indices; }
 	};
 }

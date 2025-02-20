@@ -21,6 +21,6 @@ namespace defects
 		std::vector<Proximity> proximities;
 
 	public:
-		double threshold = 0.0; // must be positive
+		double tolerance = 0.0; // must be positive
 	};
 }
