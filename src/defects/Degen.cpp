@@ -15,7 +15,7 @@ bool defects::DegenerateFaces::detect(const MeshData& mesh)
 		Eigen::RowVector3d v0 = vertices.row(f0);
 		Eigen::RowVector3d v1 = vertices.row(f1);
 		Eigen::RowVector3d v2 = vertices.row(f2);
-		if (area(v0, v1, v2) <= acceptance)
+		if (area(v0, v1, v2) <= threshold)
 		{
 			if (degenerate_face_indices.empty())
 				face_maximum_block_height = i;

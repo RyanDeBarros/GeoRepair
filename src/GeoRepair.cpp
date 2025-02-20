@@ -20,11 +20,11 @@ int main()
 	//null_faces.detect(mesh);
 	//null_faces.repair(mesh);
 	//defects::DegenerateFaces degenerate_faces;
-	//degenerate_faces.acceptance = 0.1;
+	//degenerate_faces.threshold = 0.1;
 	//degenerate_faces.detect(mesh);
 	//degenerate_faces.repair(mesh);
 	defects::DegenerateVertexPatch degenerate_vertex_patch;
-	degenerate_vertex_patch.acceptance = 0.1;
+	degenerate_vertex_patch.threshold = 0.1;
 	degenerate_vertex_patch.detect(mesh);
 	degenerate_vertex_patch.repair(mesh);
 	mesh.refresh();

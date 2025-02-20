@@ -7,7 +7,7 @@ namespace defects
 {
 	struct DegenerateFaces
 	{
-		double acceptance = 0.0; // must be positive
+		double threshold = 0.0; // must be positive
 
 		bool detect(const MeshData& mesh);
 		void repair(MeshData& mesh);

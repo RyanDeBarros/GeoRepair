@@ -17,6 +17,6 @@ namespace defects
 		EquivalenceClasses vertex_clusters;
 
 	public:
-		double acceptance = 0.0;
+		double threshold = 0.0; // must be positive
 	};
 }

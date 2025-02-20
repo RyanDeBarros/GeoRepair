@@ -1,10 +1,9 @@
 #include "DegenerateVertexPatch.h"
 
-// TODO use spatial hashing instead of neighbourhood for general distanced vertices. no logical way of combining the vertices without self-intersections, though, but still maybe useful for other algorithms. Maybe a general-space vertex distance detector that doesn't repair anything.
 void defects::DegenerateVertexPatch::detect(const MeshData& mesh)
 {
 	reset();
-	double sqrd_acceptance = acceptance * acceptance;
+	double sqrd_threshold = threshold * threshold;
 	const auto& vertices = mesh.get_vertices();
 	std::unordered_set<Eigen::Index> already_processed;
 	for (Eigen::Index i = 0; i < vertices.rows(); ++i)
@@ -14,7 +13,7 @@ void defects::DegenerateVertexPatch::detect(const MeshData& mesh)
 		const auto& neighbourhood = mesh.get_adj_vertices(i);
 		for (Eigen::Index j : neighbourhood)
 		{
-			if (!already_processed.count(j) && (vertices.row(j) - vi).squaredNorm() <= sqrd_acceptance)
+			if (!already_processed.count(j) && (vertices.row(j) - vi).squaredNorm() <= sqrd_threshold)
 				vertex_clusters.add(i, j);
 		}
 	}
