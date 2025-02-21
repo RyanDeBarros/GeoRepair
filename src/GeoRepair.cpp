@@ -5,37 +5,25 @@
 #include "defects/NullFaces.h"
 #include "defects/DegenerateVertexPatch.h"
 #include "defects/DegenerateFaces.h"
+#include "defects/InvertedNormals.h"
+
+// TODO throughout project, use vector<bool> instead of unordered_set<Eigen::Index> for vertex/face index checking
 
 int main()
 {
 	igl::opengl::glfw::Viewer viewer;
 	MeshData mesh;
-	//mesh.load("../assets/duplicate face.obj");
-	//mesh.load("../assets/null face.obj");
-	//mesh.load("../assets/degenerate vertex patch.obj");
-	mesh.load("../assets/degenerate face.obj");
+	//mesh.load("../assets/tetrahedron - inverted normals.obj");
+	mesh.load("../assets/inverted normals.obj");
 
-	//defects::DuplicateFaces duplicate_faces;
-	//duplicate_faces.detect(mesh);
-	//duplicate_faces.repair(mesh);
-	//defects::NullFaces null_faces;
-	//null_faces.detect(mesh);
-	//null_faces.repair(mesh);
-	//defects::DegenerateVertexPatch degenerate_vertex_patch;
-	//degenerate_vertex_patch.tolerance = 0.1;
-	//degenerate_vertex_patch.detect(mesh);
-	//degenerate_vertex_patch.repair(mesh);
-	defects::DegenerateFaces degenerate_faces;
-	degenerate_faces.tolerance = 0.1;
-	degenerate_faces.ignore_normals = true;
-	degenerate_faces.detect(mesh);
-	degenerate_faces.repair(mesh);
-	mesh.refresh();
+	defects::InvertedNormals inverted_normals;
+	inverted_normals.detect(mesh);
+	inverted_normals.repair(mesh);
+	//inverted_normals.flip(mesh);
+	mesh.refresh_data_structures();
 
-	//mesh.save("../assets/duplicate face - repaired.obj");
-	//mesh.save("../assets/null face - repaired.obj");
-	//mesh.save("../assets/degenerate vertex patch - repaired.obj");
-	mesh.save("../assets/degenerate face - repaired.obj");
+	//mesh.save("../assets/tetrahedron - inverted normals - repaired.obj");
+	mesh.save("../assets/inverted normals - repaired.obj");
 
 	viewer.data().set_mesh(mesh.get_vertices(), mesh.get_faces());
 	Eigen::MatrixXd vertex_colors(1, 3);
