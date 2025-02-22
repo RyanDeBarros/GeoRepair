@@ -6,24 +6,21 @@
 #include "defects/DegenerateVertexPatch.h"
 #include "defects/DegenerateFaces.h"
 #include "defects/InvertedNormals.h"
-
-// TODO throughout project, use vector<bool> instead of unordered_set<Eigen::Index> for vertex/face index checking
+#include "defects/GeneralDuplicateVertices.h"
 
 int main()
 {
 	igl::opengl::glfw::Viewer viewer;
 	MeshData mesh;
-	//mesh.load("../assets/tetrahedron - inverted normals.obj");
-	mesh.load("../assets/inverted normals.obj");
+	assert(mesh.load("../assets/duplicate within margin.obj"));
 
-	defects::InvertedNormals inverted_normals;
-	inverted_normals.detect(mesh);
-	inverted_normals.repair(mesh);
-	//inverted_normals.flip(mesh);
+	defects::GeneralDuplicateVertices general_duplicate_vertices;
+	general_duplicate_vertices.tolerance = 0.1;
+	general_duplicate_vertices.detect(mesh);
+	general_duplicate_vertices.repair(mesh);
 	mesh.refresh_data_structures();
 
-	//mesh.save("../assets/tetrahedron - inverted normals - repaired.obj");
-	mesh.save("../assets/inverted normals - repaired.obj");
+	assert(mesh.save("../assets/duplicate within margin - repaired.obj"));
 
 	viewer.data().set_mesh(mesh.get_vertices(), mesh.get_faces());
 	Eigen::MatrixXd vertex_colors(1, 3);

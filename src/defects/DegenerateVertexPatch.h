@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Common.h"
-#include "../EquivalenceClasses.h"
 
 // TODO disclaimer that DegenerateVertexPatch may cause duplicate faces
 namespace defects

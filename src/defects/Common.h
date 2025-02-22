@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../MeshData.h"
+#include "../EquivalenceClasses.h"
 
 struct EigenMatrixHash
 {

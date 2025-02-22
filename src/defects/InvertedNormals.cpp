@@ -50,6 +50,8 @@ void defects::InvertedNormals::repair(MeshData& mesh)
 
 		for (Eigen::Index submesh_root : flip_entire_submesh_roots)
 			flip(mesh, submesh_root);
+
+		reset();
 	}
 }
 

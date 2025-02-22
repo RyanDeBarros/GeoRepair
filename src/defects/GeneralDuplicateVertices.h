@@ -4,10 +4,10 @@
 
 namespace defects
 {
-	struct VertexProximityDetection
+	struct GeneralDuplicateVertices
 	{
 		void detect(const MeshData& mesh);
-		// no repair(), since logically, collapsing vertices that aren't connected will just cause self-intersections and complications.
+		void repair(MeshData& mesh);
 		void reset();
 		bool in_detected_state() const;
 

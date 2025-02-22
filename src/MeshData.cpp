@@ -6,8 +6,6 @@
 #include <igl/vertex_triangle_adjacency.h>
 #include <igl/facet_adjacency_matrix.h>
 
-#include <unordered_set>
-
 // TODO disclaimer that triangulation will occur, and no information (for now, anyways) about texture coordinates, materials, etc., will be retained.
 
 bool MeshData::load(const char* filename)

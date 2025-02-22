@@ -1,6 +1,8 @@
-#include "VertexProximityDetection.h"
+#include "GeneralDuplicateVertices.h"
 
-void defects::VertexProximityDetection::detect(const MeshData& mesh)
+#include "DuplicateVertices.h"
+
+void defects::GeneralDuplicateVertices::detect(const MeshData& mesh)
 {
 	reset();
 
@@ -34,12 +36,25 @@ void defects::VertexProximityDetection::detect(const MeshData& mesh)
 	}
 }
 
-void defects::VertexProximityDetection::reset()
+void defects::GeneralDuplicateVertices::repair(MeshData& mesh)
+{
+	if (in_detected_state())
+	{
+		EquivalenceClasses vertex_classes;
+		for (const auto& proximity : proximities)
+			vertex_classes.add(proximity.i, proximity.j);
+
+		remove_duplicate_vertices(mesh, vertex_classes);
+		reset();
+	}
+}
+
+void defects::GeneralDuplicateVertices::reset()
 {
 	proximities.clear();
 }
 
-bool defects::VertexProximityDetection::in_detected_state() const
+bool defects::GeneralDuplicateVertices::in_detected_state() const
 {
 	return !proximities.empty();
 }

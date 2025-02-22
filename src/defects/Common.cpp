@@ -140,6 +140,8 @@ bool same_adjacent_winding_order(Eigen::RowVector3i face1, Eigen::RowVector3i fa
 
 void remove_rows(Eigen::MatrixXi& mat, std::vector<Eigen::Index>& indices, Eigen::Index maximum_block_height, bool indices_sorted)
 {
+	if (indices.empty())
+		return;
 	if (!indices_sorted)
 		std::sort(indices.begin(), indices.end());
 	Eigen::MatrixXi temp(maximum_block_height, mat.cols());
@@ -196,6 +198,8 @@ void remove_rows(Eigen::MatrixXi& mat, const std::function<bool(Eigen::Index)>& 
 
 void remove_rows(Eigen::MatrixXd& mat, std::vector<Eigen::Index>& indices, Eigen::Index maximum_block_height, bool indices_sorted)
 {
+	if (indices.empty())
+		return;
 	if (!indices_sorted)
 		std::sort(indices.begin(), indices.end());
 	Eigen::MatrixXd temp(maximum_block_height, mat.cols());
@@ -252,6 +256,8 @@ void remove_rows(Eigen::MatrixXd& mat, const std::function<bool(Eigen::Index)>& 
 
 void reindex_faces(Eigen::MatrixXi& faces, const std::vector<Eigen::Index>& removed_vertices)
 {
+	if (removed_vertices.empty())
+		return;
 	std::unordered_map<Eigen::Index, Eigen::Index> face_map;
 	for (Eigen::Index i = 0; i < faces.size(); ++i)
 	{
