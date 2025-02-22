@@ -2,7 +2,7 @@
 
 #include "DuplicateVertices.h"
 
-void defects::GeneralDuplicateVertices::detect(const MeshData& mesh)
+void defects::GeneralDuplicateVertices::_detect(const MeshData& mesh)
 {
 	reset();
 
@@ -36,7 +36,7 @@ void defects::GeneralDuplicateVertices::detect(const MeshData& mesh)
 	}
 }
 
-void defects::GeneralDuplicateVertices::repair(MeshData& mesh)
+void defects::GeneralDuplicateVertices::_repair(MeshData& mesh)
 {
 	if (in_detected_state())
 	{

@@ -4,12 +4,15 @@
 
 namespace defects
 {
-	struct DuplicateFaces
+	struct DuplicateFaces : public DefectBase
 	{
-		void detect(const MeshData& mesh);
-		void repair(MeshData& mesh);
-		void reset();
-		bool in_detected_state() const;
+	protected:
+		virtual void _detect(const MeshData& mesh) override;
+		virtual void _repair(MeshData& mesh) override;
+
+	public:
+		virtual void reset() override;
+		virtual bool in_detected_state() const override;
 
 	private:
 		std::vector<Eigen::Index> duplicate_face_indices;

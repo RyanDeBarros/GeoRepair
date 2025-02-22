@@ -2,17 +2,20 @@
 
 #include <unordered_map>
 
-/*
-General template for defect struct:
+void defects::DefectBase::detect(const MeshData& mesh)
+{
+	reset();
+	_detect(mesh);
+}
 
-	void detect(const MeshData& mesh);
-	void repair(MeshData& mesh);
-	void reset();
-	bool in_detected_state() const;
-
-First line of detect() should be reset();
-In repair(), should return early if !in_detected_state()
-*/
+void defects::DefectBase::repair(MeshData& mesh)
+{
+	if (in_detected_state())
+	{
+		_repair(mesh);
+		reset();
+	}
+}
 
 double area(Eigen::RowVector3d v0, Eigen::RowVector3d v1, Eigen::RowVector3d v2)
 {

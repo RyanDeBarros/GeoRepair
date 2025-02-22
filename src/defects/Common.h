@@ -3,6 +3,21 @@
 #include "../MeshData.h"
 #include "../EquivalenceClasses.h"
 
+namespace defects
+{
+	struct DefectBase
+	{
+		void detect(const MeshData& mesh);
+		void repair(MeshData& mesh);
+		virtual void reset() = 0;
+		virtual bool in_detected_state() const = 0;
+
+	protected:
+		virtual void _detect(const MeshData&) = 0;
+		virtual void _repair(MeshData&) = 0;
+	};
+}
+
 struct EigenMatrixHash
 {
 	template<typename Derived>

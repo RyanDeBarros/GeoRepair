@@ -1,6 +1,6 @@
 #include "NullFaces.h"
 
-void defects::NullFaces::detect(const MeshData& mesh)
+void defects::NullFaces::_detect(const MeshData& mesh)
 {
 	reset();
 	const Eigen::MatrixXi& faces = mesh.get_faces();
@@ -12,7 +12,7 @@ void defects::NullFaces::detect(const MeshData& mesh)
 		});
 }
 
-void defects::NullFaces::repair(MeshData& mesh)
+void defects::NullFaces::_repair(MeshData& mesh)
 {
 	if (in_detected_state())
 	{

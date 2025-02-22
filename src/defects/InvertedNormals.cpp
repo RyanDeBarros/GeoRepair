@@ -2,7 +2,7 @@
 
 // TODO test on meshes with multiple connected submeshes
 
-void defects::InvertedNormals::detect(const MeshData& mesh)
+void defects::InvertedNormals::_detect(const MeshData& mesh)
 {
 	reset();
 	const auto& faces = mesh.get_faces();
@@ -34,7 +34,7 @@ void defects::InvertedNormals::detect(const MeshData& mesh)
 	}
 }
 
-void defects::InvertedNormals::repair(MeshData& mesh)
+void defects::InvertedNormals::_repair(MeshData& mesh)
 {
 	if (in_detected_state())
 	{

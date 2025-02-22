@@ -2,7 +2,7 @@
 
 #include <unordered_set>
 
-void defects::DuplicateFaces::detect(const MeshData& mesh)
+void defects::DuplicateFaces::_detect(const MeshData& mesh)
 {
 	reset();
 	const Eigen::MatrixXi& faces = mesh.get_faces();
@@ -30,7 +30,7 @@ void defects::DuplicateFaces::detect(const MeshData& mesh)
 	}
 }
 
-void defects::DuplicateFaces::repair(MeshData& mesh)
+void defects::DuplicateFaces::_repair(MeshData& mesh)
 {
 	if (in_detected_state())
 	{
