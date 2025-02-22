@@ -2,7 +2,6 @@
 
 void defects::NullFaces::_detect(const MeshData& mesh)
 {
-	reset();
 	const Eigen::MatrixXi& faces = mesh.get_faces();
 	remove_rows_setup(faces, null_face_indices, maximum_block_height, [&](Eigen::Index i) {
 		auto v0 = faces(i, 0);
@@ -14,11 +13,7 @@ void defects::NullFaces::_detect(const MeshData& mesh)
 
 void defects::NullFaces::_repair(MeshData& mesh)
 {
-	if (in_detected_state())
-	{
-		remove_rows(mesh.get_faces(), null_face_indices, maximum_block_height, true);
-		reset();
-	}
+	remove_rows(mesh.get_faces(), null_face_indices, maximum_block_height, true);
 }
 
 void defects::NullFaces::reset()

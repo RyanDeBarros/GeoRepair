@@ -4,8 +4,6 @@
 
 void defects::GeneralDuplicateVertices::_detect(const MeshData& mesh)
 {
-	reset();
-
 	std::unordered_map<Eigen::Vector3i, std::vector<Eigen::Index>, EigenMatrixHash> voxel_grid;
 	const double inv_tolerance = 1.0 / tolerance;
 	const double sqrd_tolerance = tolerance * tolerance;
@@ -38,15 +36,11 @@ void defects::GeneralDuplicateVertices::_detect(const MeshData& mesh)
 
 void defects::GeneralDuplicateVertices::_repair(MeshData& mesh)
 {
-	if (in_detected_state())
-	{
-		EquivalenceClasses vertex_classes;
-		for (const auto& proximity : proximities)
-			vertex_classes.add(proximity.i, proximity.j);
+	EquivalenceClasses vertex_classes;
+	for (const auto& proximity : proximities)
+		vertex_classes.add(proximity.i, proximity.j);
 
-		remove_duplicate_vertices(mesh, vertex_classes);
-		reset();
-	}
+	remove_duplicate_vertices(mesh, vertex_classes);
 }
 
 void defects::GeneralDuplicateVertices::reset()

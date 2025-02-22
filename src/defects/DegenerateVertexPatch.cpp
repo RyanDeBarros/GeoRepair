@@ -4,7 +4,6 @@
 
 void defects::DegenerateVertexPatch::_detect(const MeshData& mesh)
 {
-	reset();
 	double sqrd_tolerance = tolerance * tolerance;
 	const auto& vertices = mesh.get_vertices();
 	for (Eigen::Index i = 0; i < vertices.rows(); ++i)
@@ -21,11 +20,7 @@ void defects::DegenerateVertexPatch::_detect(const MeshData& mesh)
 
 void defects::DegenerateVertexPatch::_repair(MeshData& mesh)
 {
-	if (in_detected_state())
-	{
-		remove_duplicate_vertices(mesh, vertex_clusters);
-		reset();
-	}
+	remove_duplicate_vertices(mesh, vertex_clusters);
 }
 
 void defects::DegenerateVertexPatch::reset()

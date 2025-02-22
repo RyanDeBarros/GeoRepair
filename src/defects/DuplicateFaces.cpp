@@ -4,7 +4,6 @@
 
 void defects::DuplicateFaces::_detect(const MeshData& mesh)
 {
-	reset();
 	const Eigen::MatrixXi& faces = mesh.get_faces();
 	std::unordered_set<Eigen::RowVector3i, EigenMatrixHash> existing_faces;
 	if (ignore_normals)
@@ -32,11 +31,7 @@ void defects::DuplicateFaces::_detect(const MeshData& mesh)
 
 void defects::DuplicateFaces::_repair(MeshData& mesh)
 {
-	if (in_detected_state())
-	{
-		remove_rows(mesh.get_faces(), duplicate_face_indices, maximum_block_height, true);
-		reset();
-	}
+	remove_rows(mesh.get_faces(), duplicate_face_indices, maximum_block_height, true);
 }
 
 void defects::DuplicateFaces::reset()

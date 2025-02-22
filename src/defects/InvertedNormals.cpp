@@ -4,7 +4,6 @@
 
 void defects::InvertedNormals::_detect(const MeshData& mesh)
 {
-	reset();
 	const auto& faces = mesh.get_faces();
 	resize_vector_with_value(winding_adjustments, faces.rows(), WindingAdjustment::UNPROCESSED);
 	const auto& all_submeshes = mesh.get_connected_submeshes();
@@ -36,23 +35,18 @@ void defects::InvertedNormals::_detect(const MeshData& mesh)
 
 void defects::InvertedNormals::_repair(MeshData& mesh)
 {
-	if (in_detected_state())
+	auto& faces = mesh.get_faces();
+	for (size_t i = 0; i < flip_faces.size(); ++i)
 	{
-		auto& faces = mesh.get_faces();
-		for (size_t i = 0; i < flip_faces.size(); ++i)
-		{
-			const auto& flip_faces_in_submesh = flip_faces[i];
-			for (Eigen::Index face_index : flip_faces_in_submesh)
-				faces.row(face_index).reverseInPlace();
-			if (signed_volume(mesh, submesh_roots[i]) < 0.0)
-				flip(mesh, submesh_roots[i]);
-		}
-
-		for (Eigen::Index submesh_root : flip_entire_submesh_roots)
-			flip(mesh, submesh_root);
-
-		reset();
+		const auto& flip_faces_in_submesh = flip_faces[i];
+		for (Eigen::Index face_index : flip_faces_in_submesh)
+			faces.row(face_index).reverseInPlace();
+		if (signed_volume(mesh, submesh_roots[i]) < 0.0)
+			flip(mesh, submesh_roots[i]);
 	}
+
+	for (Eigen::Index submesh_root : flip_entire_submesh_roots)
+		flip(mesh, submesh_root);
 }
 
 void defects::InvertedNormals::reset()
