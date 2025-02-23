@@ -19,10 +19,10 @@ namespace defects
 		std::vector<Eigen::RowVector3i> add_faces;
 		std::vector<Eigen::RowVector3d> add_vertices;
 
-		void repair_fan(MeshData& mesh, const std::vector<Eigen::Index>& boundary);
-		void repair_strip(MeshData& mesh, const std::vector<Eigen::Index>& boundary);
-		void repair_clip(MeshData& mesh, const std::vector<Eigen::Index>& boundary);
-		void repair_pie(MeshData& mesh, const std::vector<Eigen::Index>& boundary);
+		void repair_fan(MeshData& mesh, const std::vector<Eigen::Index>& boundary, bool increasing);
+		void repair_strip(MeshData& mesh, const std::vector<Eigen::Index>& boundary, bool increasing);
+		void repair_clip(MeshData& mesh, const std::vector<Eigen::Index>& boundary, bool increasing);
+		void repair_pie(MeshData& mesh, const std::vector<Eigen::Index>& boundary, bool increasing);
 
 	public:
 		enum class PatchMethod
