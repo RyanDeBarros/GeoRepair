@@ -1,22 +1,18 @@
 #include <igl/opengl/glfw/Viewer.h>
 
-#include "defects/NonManifoldEdges.h"
+#include "defects/InvertedNormals.h"
 
 int main()
 {
 	igl::opengl::glfw::Viewer viewer;
 	MeshData mesh;
-	assert(mesh.load("../assets/non-manifold.obj"));
-	defects::NonManifoldEdges non_manifold_edges;
-	non_manifold_edges.detect(mesh);
-	//non_manifold_edges.repair(mesh);
-	//mesh.refresh_data_structures();
+	assert(mesh.load("../assets/inverted normals.obj"));
+	defects::InvertedNormals inverted_normals;
+	inverted_normals.detect(mesh);
+	inverted_normals.repair(mesh);
+	mesh.refresh_auxiliary();
 
-	non_manifold_edges.traverse_non_manifold_edges([](Eigen::Index v1, Eigen::Index v2, size_t count) {
-		std::cout << "(" << v1 << ", " << v2 << "): " << count << std::endl;
-		});
-
-	assert(mesh.save("../assets/non-manifold.obj"));
+	assert(mesh.save("../assets/inverted normals - repaired.obj"));
 
 	viewer.data().set_mesh(mesh.get_vertices(), mesh.get_faces());
 	Eigen::MatrixXd vertex_colors(1, 3);
