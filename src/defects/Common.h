@@ -1,20 +1,20 @@
 #pragma once
 
-#include "../MeshData.h"
+#include "../Mesh.h"
 #include "../EquivalenceClasses.h"
 
 namespace defects
 {
 	struct DefectBase
 	{
-		void detect(const MeshData& mesh);
-		void repair(MeshData& mesh);
+		void detect(const Mesh& mesh);
+		void repair(Mesh& mesh);
 		virtual void reset() = 0;
 		virtual bool in_detected_state() const = 0;
 
 	protected:
-		virtual void _detect(const MeshData&) = 0;
-		virtual void _repair(MeshData&) = 0;
+		virtual void _detect(const Mesh&) = 0;
+		virtual void _repair(Mesh&) = 0;
 	};
 }
 
@@ -31,9 +31,9 @@ struct EigenMatrixHash
 };
 
 extern double area(Eigen::RowVector3d v0, Eigen::RowVector3d v1, Eigen::RowVector3d v2);
-extern double area(const MeshData& mesh, Eigen::Index face);
-extern double signed_volume(const MeshData& mesh, Eigen::Index submesh_root);
-extern Eigen::Vector3d face_normal(const MeshData& mesh, Eigen::Index face_index);
+extern double area(const Mesh& mesh, Eigen::Index face);
+extern double signed_volume(const Mesh& mesh, Eigen::Index submesh_root);
+extern Eigen::Vector3d face_normal(const Mesh& mesh, Eigen::Index face_index);
 extern Eigen::RowVector3i rotate_forward(Eigen::RowVector3i vector);
 extern Eigen::RowVector3i rotate_backward(Eigen::RowVector3i vector);
 extern void rotate_forward_in_place(Eigen::RowVector3i& vector);

@@ -2,16 +2,16 @@
 
 #include <igl/boundary_loop.h>
 
-void defects::UnpatchedHoles::_detect(const MeshData& mesh)
+void defects::UnpatchedHoles::_detect(const Mesh& mesh)
 {
 	igl::boundary_loop(mesh.get_faces(), boundary_vertices);
 }
 
-void defects::UnpatchedHoles::_repair(MeshData& mesh)
+void defects::UnpatchedHoles::_repair(Mesh& mesh)
 {
 	add_faces.clear();
 	add_vertices.clear();
-	void(defects::UnpatchedHoles::*repair_func)(MeshData&, const std::vector<Eigen::Index>&, bool) = nullptr;
+	void(defects::UnpatchedHoles::*repair_func)(Mesh&, const std::vector<Eigen::Index>&, bool) = nullptr;
 
 	switch (patch_method)
 	{
@@ -114,7 +114,7 @@ bool defects::UnpatchedHoles::in_detected_state() const
 
 // TODO take winding order of adjacent face into account
 
-void defects::UnpatchedHoles::repair_fan(MeshData& mesh, const std::vector<Eigen::Index>& boundary, bool increasing)
+void defects::UnpatchedHoles::repair_fan(Mesh& mesh, const std::vector<Eigen::Index>& boundary, bool increasing)
 {
 	for (size_t i = 2; i < boundary.size(); ++i)
 	{
@@ -123,7 +123,7 @@ void defects::UnpatchedHoles::repair_fan(MeshData& mesh, const std::vector<Eigen
 	}
 }
 
-void defects::UnpatchedHoles::repair_strip(MeshData& mesh, const std::vector<Eigen::Index>& boundary, bool increasing)
+void defects::UnpatchedHoles::repair_strip(Mesh& mesh, const std::vector<Eigen::Index>& boundary, bool increasing)
 {
 	int i = 0;
 	int j = boundary.size() - 1;
@@ -151,7 +151,7 @@ void defects::UnpatchedHoles::repair_strip(MeshData& mesh, const std::vector<Eig
 	}
 }
 
-void defects::UnpatchedHoles::repair_clip(MeshData& mesh, const std::vector<Eigen::Index>& boundary, bool increasing)
+void defects::UnpatchedHoles::repair_clip(Mesh& mesh, const std::vector<Eigen::Index>& boundary, bool increasing)
 {
 	size_t j = 1;
 	size_t k = 2;
@@ -177,7 +177,7 @@ void defects::UnpatchedHoles::repair_clip(MeshData& mesh, const std::vector<Eige
 	} while (k < boundary.size());
 }
 
-void defects::UnpatchedHoles::repair_pie(MeshData& mesh, const std::vector<Eigen::Index>& boundary, bool increasing)
+void defects::UnpatchedHoles::repair_pie(Mesh& mesh, const std::vector<Eigen::Index>& boundary, bool increasing)
 {
 	const auto& vertices = mesh.get_vertices();
 	Eigen::RowVector3d mean_vertex(0.0, 0.0, 0.0);

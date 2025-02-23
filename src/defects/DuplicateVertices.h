@@ -2,4 +2,4 @@
 
 #include "Common.h"
 
-extern void remove_duplicate_vertices(MeshData& mesh, EquivalenceClasses& vertex_clusters);
+extern void remove_duplicate_vertices(Mesh& mesh, EquivalenceClasses& vertex_clusters);

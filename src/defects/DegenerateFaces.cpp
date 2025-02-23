@@ -1,6 +1,6 @@
 #include "DegenerateFaces.h"
 
-void defects::DegenerateFaces::_detect(const MeshData& mesh)
+void defects::DegenerateFaces::_detect(const Mesh& mesh)
 {
 	degenerate_vertex_patch.tolerance = tolerance;
 	degenerate_vertex_patch.detect(mesh);
@@ -8,7 +8,7 @@ void defects::DegenerateFaces::_detect(const MeshData& mesh)
 	duplicate_faces.detect(mesh);
 }
 
-void defects::DegenerateFaces::_repair(MeshData& mesh)
+void defects::DegenerateFaces::_repair(Mesh& mesh)
 {
 	if (degenerate_vertex_patch.in_detected_state())
 	{

@@ -1,6 +1,6 @@
 #include "DuplicateVertices.h"
 
-void remove_duplicate_vertices(MeshData& mesh, EquivalenceClasses& vertex_clusters)
+void remove_duplicate_vertices(Mesh& mesh, EquivalenceClasses& vertex_clusters)
 {
 	auto& vertices = mesh.get_vertices();
 	auto& faces = mesh.get_faces();

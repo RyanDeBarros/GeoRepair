@@ -1,6 +1,6 @@
 #include "NonManifoldEdges.h"
 
-void defects::NonManifoldEdges::_detect(const MeshData& mesh)
+void defects::NonManifoldEdges::_detect(const Mesh& mesh)
 {
     const auto& faces = mesh.get_faces();
     for (Eigen::Index i = 0; i < faces.rows(); ++i)
@@ -12,7 +12,7 @@ void defects::NonManifoldEdges::_detect(const MeshData& mesh)
     }
 }
 
-void defects::NonManifoldEdges::_repair(MeshData& mesh)
+void defects::NonManifoldEdges::_repair(Mesh& mesh)
 {
     // nothing to repair, as there is no obvious general solution to fixing non-manifold edges, which might even be intentional.
     // TODO disclaimer of the above comment

@@ -2,7 +2,7 @@
 
 #include "DuplicateVertices.h"
 
-void defects::GeneralDuplicateVertices::_detect(const MeshData& mesh)
+void defects::GeneralDuplicateVertices::_detect(const Mesh& mesh)
 {
 	std::unordered_map<Eigen::Vector3i, std::vector<Eigen::Index>, EigenMatrixHash> voxel_grid;
 	const double inv_tolerance = 1.0 / tolerance;
@@ -34,7 +34,7 @@ void defects::GeneralDuplicateVertices::_detect(const MeshData& mesh)
 	}
 }
 
-void defects::GeneralDuplicateVertices::_repair(MeshData& mesh)
+void defects::GeneralDuplicateVertices::_repair(Mesh& mesh)
 {
 	EquivalenceClasses vertex_classes;
 	for (const auto& proximity : proximities)

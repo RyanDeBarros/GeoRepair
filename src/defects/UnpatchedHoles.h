@@ -7,8 +7,8 @@ namespace defects
 	struct UnpatchedHoles : public DefectBase
 	{
 	protected:
-		virtual void _detect(const MeshData& mesh) override;
-		virtual void _repair(MeshData& mesh) override;
+		virtual void _detect(const Mesh& mesh) override;
+		virtual void _repair(Mesh& mesh) override;
 
 	public:
 		virtual void reset() override;
@@ -19,10 +19,10 @@ namespace defects
 		std::vector<Eigen::RowVector3i> add_faces;
 		std::vector<Eigen::RowVector3d> add_vertices;
 
-		void repair_fan(MeshData& mesh, const std::vector<Eigen::Index>& boundary, bool increasing);
-		void repair_strip(MeshData& mesh, const std::vector<Eigen::Index>& boundary, bool increasing);
-		void repair_clip(MeshData& mesh, const std::vector<Eigen::Index>& boundary, bool increasing);
-		void repair_pie(MeshData& mesh, const std::vector<Eigen::Index>& boundary, bool increasing);
+		void repair_fan(Mesh& mesh, const std::vector<Eigen::Index>& boundary, bool increasing);
+		void repair_strip(Mesh& mesh, const std::vector<Eigen::Index>& boundary, bool increasing);
+		void repair_clip(Mesh& mesh, const std::vector<Eigen::Index>& boundary, bool increasing);
+		void repair_pie(Mesh& mesh, const std::vector<Eigen::Index>& boundary, bool increasing);
 
 	public:
 		enum class PatchMethod

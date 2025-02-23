@@ -2,18 +2,19 @@
 
 #include <unordered_map>
 
-void defects::DefectBase::detect(const MeshData& mesh)
+void defects::DefectBase::detect(const Mesh& mesh)
 {
 	reset();
 	_detect(mesh);
 }
 
-void defects::DefectBase::repair(MeshData& mesh)
+void defects::DefectBase::repair(Mesh& mesh)
 {
 	if (in_detected_state())
 	{
 		_repair(mesh);
 		reset();
+		mesh.push();
 	}
 }
 
@@ -22,14 +23,14 @@ double area(Eigen::RowVector3d v0, Eigen::RowVector3d v1, Eigen::RowVector3d v2)
     return 0.5 * ((v1 - v0).cross(v2 - v0)).norm();
 }
 
-double area(const MeshData& mesh, Eigen::Index face)
+double area(const Mesh& mesh, Eigen::Index face)
 {
 	const auto& vertices = mesh.get_vertices();
 	const auto& f = mesh.get_faces().row(face);
 	return area(vertices.row(f(0)), vertices.row(f(1)), vertices.row(f(2)));
 }
 
-double signed_volume(const MeshData& mesh, Eigen::Index submesh_root)
+double signed_volume(const Mesh& mesh, Eigen::Index submesh_root)
 {
 	const auto& vertices = mesh.get_vertices();
 	const auto& faces = mesh.get_faces();
@@ -45,7 +46,7 @@ double signed_volume(const MeshData& mesh, Eigen::Index submesh_root)
 	return signed_volume / 6.0;
 }
 
-Eigen::Vector3d face_normal(const MeshData& mesh, Eigen::Index face_index)
+Eigen::Vector3d face_normal(const Mesh& mesh, Eigen::Index face_index)
 {
 	const auto& vertices = mesh.get_vertices();
 	const auto& faces = mesh.get_faces();

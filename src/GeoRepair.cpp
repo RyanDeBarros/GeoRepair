@@ -5,12 +5,14 @@
 int main()
 {
 	igl::opengl::glfw::Viewer viewer;
-	MeshData mesh;
+	Mesh mesh;
 	assert(mesh.load("../assets/inverted normals.obj"));
 	defects::InvertedNormals inverted_normals;
 	inverted_normals.detect(mesh);
 	inverted_normals.repair(mesh);
-	mesh.refresh_auxiliary();
+	
+	mesh.undo();
+	mesh.redo();
 
 	assert(mesh.save("../assets/inverted normals - repaired.obj"));
 

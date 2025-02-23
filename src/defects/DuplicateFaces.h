@@ -7,8 +7,8 @@ namespace defects
 	struct DuplicateFaces : public DefectBase
 	{
 	protected:
-		virtual void _detect(const MeshData& mesh) override;
-		virtual void _repair(MeshData& mesh) override;
+		virtual void _detect(const Mesh& mesh) override;
+		virtual void _repair(Mesh& mesh) override;
 
 	public:
 		virtual void reset() override;

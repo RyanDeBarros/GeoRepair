@@ -1,6 +1,6 @@
 #include "NullFaces.h"
 
-void defects::NullFaces::_detect(const MeshData& mesh)
+void defects::NullFaces::_detect(const Mesh& mesh)
 {
 	const Eigen::MatrixXi& faces = mesh.get_faces();
 	remove_rows_setup(faces, null_face_indices, maximum_block_height, [&](Eigen::Index i) {
@@ -11,7 +11,7 @@ void defects::NullFaces::_detect(const MeshData& mesh)
 		});
 }
 
-void defects::NullFaces::_repair(MeshData& mesh)
+void defects::NullFaces::_repair(Mesh& mesh)
 {
 	remove_rows(mesh.get_faces(), null_face_indices, maximum_block_height, true);
 }

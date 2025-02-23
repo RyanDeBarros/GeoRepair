@@ -2,7 +2,7 @@
 
 #include "DuplicateVertices.h"
 
-void defects::DegenerateVertexPatch::_detect(const MeshData& mesh)
+void defects::DegenerateVertexPatch::_detect(const Mesh& mesh)
 {
 	double sqrd_tolerance = tolerance * tolerance;
 	const auto& vertices = mesh.get_vertices();
@@ -18,7 +18,7 @@ void defects::DegenerateVertexPatch::_detect(const MeshData& mesh)
 	}
 }
 
-void defects::DegenerateVertexPatch::_repair(MeshData& mesh)
+void defects::DegenerateVertexPatch::_repair(Mesh& mesh)
 {
 	remove_duplicate_vertices(mesh, vertex_clusters);
 }

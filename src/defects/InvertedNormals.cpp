@@ -2,7 +2,7 @@
 
 // TODO test on meshes with multiple connected submeshes
 
-void defects::InvertedNormals::_detect(const MeshData& mesh)
+void defects::InvertedNormals::_detect(const Mesh& mesh)
 {
 	const auto& faces = mesh.get_faces();
 	resize_vector_with_value(winding_adjustments, faces.rows(), WindingAdjustment::UNPROCESSED);
@@ -33,7 +33,7 @@ void defects::InvertedNormals::_detect(const MeshData& mesh)
 	}
 }
 
-void defects::InvertedNormals::_repair(MeshData& mesh)
+void defects::InvertedNormals::_repair(Mesh& mesh)
 {
 	auto& faces = mesh.get_faces();
 	for (size_t i = 0; i < flip_faces.size(); ++i)
@@ -61,12 +61,12 @@ bool defects::InvertedNormals::in_detected_state() const
 	return !flip_faces.empty() || !flip_entire_submesh_roots.empty();
 }
 
-void defects::InvertedNormals::flip(MeshData& mesh)
+void defects::InvertedNormals::flip(Mesh& mesh)
 {
 	mesh.get_faces().rowwise().reverseInPlace();
 }
 
-void defects::InvertedNormals::flip(MeshData& mesh, Eigen::Index submesh_root)
+void defects::InvertedNormals::flip(Mesh& mesh, Eigen::Index submesh_root)
 {
 	auto& faces = mesh.get_faces();
 	const auto& submesh = mesh.get_connected_submesh(submesh_root);
