@@ -3,10 +3,10 @@
 void defects::NullFaces::_detect(const Mesh& mesh)
 {
 	const Eigen::MatrixXi& faces = mesh.get_faces();
-	remove_rows_setup(faces, null_face_indices, maximum_block_height, [&](Eigen::Index i) {
-		auto v0 = faces(i, 0);
-		auto v1 = faces(i, 1);
-		auto v2 = faces(i, 2);
+	remove_rows_setup(faces, null_face_indices, maximum_block_height, [&](Eigen::Index i, const Eigen::Vector3i& face) {
+		Eigen::Index v0 = face(0);
+		Eigen::Index v1 = face(1);
+		Eigen::Index v2 = face(2);
 		return v0 == v1 || v0 == v2 || v1 == v2;
 		});
 }

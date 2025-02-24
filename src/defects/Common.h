@@ -42,12 +42,12 @@ extern bool same_adjacent_winding_order(Eigen::RowVector3i face1, Eigen::RowVect
 
 extern void remove_rows(Eigen::MatrixXi& mat, std::vector<Eigen::Index>& indices, Eigen::Index maximum_block_height, bool indices_sorted);
 extern void remove_rows(Eigen::MatrixXi& mat, std::vector<Eigen::Index>& indices, bool indices_sorted);
-extern void remove_rows_setup(const Eigen::MatrixXi& mat, std::vector<Eigen::Index>& indices, Eigen::Index& maximum_block_height, const std::function<bool(Eigen::Index)>& remove_row_predicate);
-extern void remove_rows(Eigen::MatrixXi& mat, const std::function<bool(Eigen::Index)>& remove_row_predicate);
+extern void remove_rows_setup(const Eigen::MatrixXi& mat, std::vector<Eigen::Index>& indices, Eigen::Index& maximum_block_height, const std::function<bool(Eigen::Index, const Eigen::RowVector3i&)>& remove_row_predicate);
+extern void remove_rows(Eigen::MatrixXi& mat, const std::function<bool(Eigen::Index, const Eigen::RowVector3i&)>& remove_row_predicate);
 extern void remove_rows(Eigen::MatrixXd& mat, std::vector<Eigen::Index>& indices, Eigen::Index maximum_block_height, bool indices_sorted);
 extern void remove_rows(Eigen::MatrixXd& mat, std::vector<Eigen::Index>& indices, bool indices_sorted);
-extern void remove_rows_setup(const Eigen::MatrixXd& mat, std::vector<Eigen::Index>& indices, Eigen::Index& maximum_block_height, const std::function<bool(Eigen::Index)>& remove_row_predicate);
-extern void remove_rows(Eigen::MatrixXd& mat, const std::function<bool(Eigen::Index)>& remove_row_predicate);
+extern void remove_rows_setup(const Eigen::MatrixXd& mat, std::vector<Eigen::Index>& indices, Eigen::Index& maximum_block_height, const std::function<bool(Eigen::Index, const Eigen::RowVector3d&)>& remove_row_predicate);
+extern void remove_rows(Eigen::MatrixXd& mat, const std::function<bool(Eigen::Index, const Eigen::RowVector3d&)>& remove_row_predicate);
 
 extern void reindex_faces(Eigen::MatrixXi& faces, const std::vector<Eigen::Index>& removed_vertices);
 

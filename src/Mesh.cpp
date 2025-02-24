@@ -3,11 +3,18 @@
 #include <igl/read_triangle_mesh.h>
 #include <igl/write_triangle_mesh.h>
 
+#include "defects/Common.h"
+
 bool Mesh::load(const char* filename)
 {
 	// TODO eventually, add support for texture coordinates, etc., for specific file extensions
 	if (!igl::read_triangle_mesh(filename, data->V, data->F))
 		return false;
+	// remove invalid faces
+	Eigen::Index max_vertex = data->V.rows() - 1;
+	remove_rows(data->F, [max_vertex](Eigen::Index i, const Eigen::RowVector3i& face) {
+		return std::max({ face(0), face(1), face(2) }) > max_vertex;
+		});
 	push();
 	return true;
 }

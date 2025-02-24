@@ -171,13 +171,13 @@ void remove_rows(Eigen::MatrixXi& mat, std::vector<Eigen::Index>& indices, bool 
 	remove_rows(mat, indices, mat.rows() - indices.size(), indices_sorted);
 }
 
-void remove_rows_setup(const Eigen::MatrixXi& mat, std::vector<Eigen::Index>& indices, Eigen::Index& maximum_block_height, const std::function<bool(Eigen::Index)>& remove_row_predicate)
+void remove_rows_setup(const Eigen::MatrixXi& mat, std::vector<Eigen::Index>& indices, Eigen::Index& maximum_block_height, const std::function<bool(Eigen::Index, const Eigen::RowVector3i&)>& remove_row_predicate)
 {
 	indices.clear();
 	maximum_block_height = 0;
 	for (Eigen::Index i = 0; i < mat.rows(); ++i)
 	{
-		if (remove_row_predicate(i))
+		if (remove_row_predicate(i, mat.row(i)))
 		{
 			if (indices.empty())
 				maximum_block_height = i;
@@ -192,7 +192,7 @@ void remove_rows_setup(const Eigen::MatrixXi& mat, std::vector<Eigen::Index>& in
 		maximum_block_height = std::max(maximum_block_height, mat.rows() - indices.back() - 1);
 }
 
-void remove_rows(Eigen::MatrixXi& mat, const std::function<bool(Eigen::Index)>& remove_row_predicate)
+void remove_rows(Eigen::MatrixXi& mat, const std::function<bool(Eigen::Index, const Eigen::RowVector3i&)>& remove_row_predicate)
 {
 	std::vector<Eigen::Index> indices;
 	Eigen::Index maximum_block_height;
@@ -229,13 +229,13 @@ void remove_rows(Eigen::MatrixXd& mat, std::vector<Eigen::Index>& indices, bool 
 	remove_rows(mat, indices, mat.rows() - indices.size(), indices_sorted);
 }
 
-void remove_rows_setup(const Eigen::MatrixXd& mat, std::vector<Eigen::Index>& indices, Eigen::Index& maximum_block_height, const std::function<bool(Eigen::Index)>& remove_row_predicate)
+void remove_rows_setup(const Eigen::MatrixXd& mat, std::vector<Eigen::Index>& indices, Eigen::Index& maximum_block_height, const std::function<bool(Eigen::Index, const Eigen::RowVector3d&)>& remove_row_predicate)
 {
 	indices.clear();
 	maximum_block_height = 0;
 	for (Eigen::Index i = 0; i < mat.rows(); ++i)
 	{
-		if (remove_row_predicate(i))
+		if (remove_row_predicate(i, mat.row(i)))
 		{
 			if (indices.empty())
 				maximum_block_height = i;
@@ -250,7 +250,7 @@ void remove_rows_setup(const Eigen::MatrixXd& mat, std::vector<Eigen::Index>& in
 		maximum_block_height = std::max(maximum_block_height, mat.rows() - indices.back() - 1);
 }
 
-void remove_rows(Eigen::MatrixXd& mat, const std::function<bool(Eigen::Index)>& remove_row_predicate)
+void remove_rows(Eigen::MatrixXd& mat, const std::function<bool(Eigen::Index, const Eigen::RowVector3d&)>& remove_row_predicate)
 {
 	std::vector<Eigen::Index> indices;
 	Eigen::Index maximum_block_height;

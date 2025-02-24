@@ -8,22 +8,22 @@ void defects::DuplicateFaces::_detect(const Mesh& mesh)
 	std::unordered_set<Eigen::RowVector3i, EigenMatrixHash> existing_faces;
 	if (ignore_normals)
 	{
-		remove_rows_setup(faces, duplicate_face_indices, maximum_block_height, [&](Eigen::Index i) {
-			bool unique = existing_faces.insert(Eigen::RowVector3i(faces(i, 0), faces(i, 1), faces(i, 2))).second;
-			unique &= existing_faces.insert(Eigen::RowVector3i(faces(i, 2), faces(i, 0), faces(i, 1))).second;
-			unique &= existing_faces.insert(Eigen::RowVector3i(faces(i, 1), faces(i, 2), faces(i, 0))).second;
-			unique &= existing_faces.insert(Eigen::RowVector3i(faces(i, 2), faces(i, 1), faces(i, 0))).second;
-			unique &= existing_faces.insert(Eigen::RowVector3i(faces(i, 0), faces(i, 2), faces(i, 1))).second;
-			unique &= existing_faces.insert(Eigen::RowVector3i(faces(i, 1), faces(i, 0), faces(i, 2))).second;
+		remove_rows_setup(faces, duplicate_face_indices, maximum_block_height, [&existing_faces](Eigen::Index i, const Eigen::RowVector3i& face) {
+			bool unique = existing_faces.insert(Eigen::RowVector3i(face(0), face(1), face(2))).second;
+			unique &= existing_faces.insert(Eigen::RowVector3i(face(2), face(0), face(1))).second;
+			unique &= existing_faces.insert(Eigen::RowVector3i(face(1), face(2), face(0))).second;
+			unique &= existing_faces.insert(Eigen::RowVector3i(face(2), face(1), face(0))).second;
+			unique &= existing_faces.insert(Eigen::RowVector3i(face(0), face(2), face(1))).second;
+			unique &= existing_faces.insert(Eigen::RowVector3i(face(1), face(0), face(2))).second;
 			return !unique;
 			});
 	}
 	else
 	{
-		remove_rows_setup(faces, duplicate_face_indices, maximum_block_height, [&](Eigen::Index i) {
-			bool unique = existing_faces.insert(Eigen::RowVector3i(faces(i, 0), faces(i, 1), faces(i, 2))).second;
-			unique &= existing_faces.insert(Eigen::RowVector3i(faces(i, 2), faces(i, 0), faces(i, 1))).second;
-			unique &= existing_faces.insert(Eigen::RowVector3i(faces(i, 1), faces(i, 2), faces(i, 0))).second;
+		remove_rows_setup(faces, duplicate_face_indices, maximum_block_height, [&existing_faces](Eigen::Index i, const Eigen::RowVector3i& face) {
+			bool unique = existing_faces.insert(Eigen::RowVector3i(face(0), face(1), face(2))).second;
+			unique &= existing_faces.insert(Eigen::RowVector3i(face(2), face(0), face(1))).second;
+			unique &= existing_faces.insert(Eigen::RowVector3i(face(1), face(2), face(0))).second;
 			return !unique;
 			});
 	}
