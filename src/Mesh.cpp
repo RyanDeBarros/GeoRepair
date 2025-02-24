@@ -13,7 +13,7 @@ bool Mesh::load(const char* filename)
 	// remove invalid faces
 	Eigen::Index max_vertex = data->V.rows() - 1;
 	remove_rows(data->F, [max_vertex](Eigen::Index i, const Eigen::RowVector3i& face) {
-		return std::max({ face(0), face(1), face(2) }) > max_vertex;
+		return std::max({ face(0), face(1), face(2) }) > max_vertex || std::min({ face(0), face(1), face(2) }) < 0;
 		});
 	push();
 	return true;

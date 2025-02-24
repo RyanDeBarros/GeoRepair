@@ -18,6 +18,13 @@ class MeshAuxiliaryData
 		VADJ,
 		VFADJ,
 		FADJ,
+		VN,
+		LAPLACIAN,
+		LAPLACIAN_EVAL,
+		LAPLACIAN_RESIDUALS,
+		MASS,
+		MEAN_CURVATURES,
+		MEAN_CURVATURE_MAGNITUDES,
 		CONNECTED_SUBMESHES,
 		_COUNT
 	};
@@ -27,6 +34,13 @@ class MeshAuxiliaryData
 	std::vector<std::vector<Eigen::Index>> VFADJ_row;
 	std::vector<std::vector<Eigen::Index>> VFADJ_col;
 	Eigen::SparseMatrix<int> FADJ;
+	Eigen::MatrixXd VN;
+	Eigen::SparseMatrix<double> laplacian;
+	Eigen::MatrixXd laplacian_eval;
+	Eigen::VectorXd laplacian_residuals;
+	Eigen::SparseMatrix<double> mass;
+	Eigen::MatrixXd mean_curvatures;
+	Eigen::MatrixXd mean_curvature_magnitudes;
 	std::vector<std::vector<Eigen::Index>> connected_submeshes;
 	std::unordered_map<Eigen::Index, size_t> connected_submesh_roots;
 
@@ -36,6 +50,13 @@ public:
 	const decltype(VFADJ_row)& get_vfadj_row(const MeshPrimaryData&);
 	const decltype(VFADJ_col)& get_vfadj_col(const MeshPrimaryData&);
 	const decltype(FADJ)& get_fadj(const MeshPrimaryData&);
+	const decltype(VN)& get_vertex_normals(const MeshPrimaryData&);
+	const decltype(laplacian)& get_laplacian(const MeshPrimaryData&);
+	const decltype(laplacian_eval)& get_laplacian_eval(const MeshPrimaryData&);
+	const decltype(laplacian_residuals)& get_laplacian_residuals(const MeshPrimaryData&);
+	const decltype(mass)& get_mass(const MeshPrimaryData&);
+	const decltype(mean_curvatures)& get_mean_curvatures(const MeshPrimaryData&);
+	const decltype(mean_curvature_magnitudes)& get_mean_curvature_magnitudes(const MeshPrimaryData&);
 	const decltype(connected_submeshes)& get_connected_submeshes(const MeshPrimaryData&);
 	const decltype(connected_submesh_roots)& get_connected_submesh_roots(const MeshPrimaryData&);
 

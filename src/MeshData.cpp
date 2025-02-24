@@ -3,6 +3,7 @@
 #include <igl/adjacency_list.h>
 #include <igl/vertex_triangle_adjacency.h>
 #include <igl/facet_adjacency_matrix.h>
+#include <igl/invert_diag.h>
 
 // TODO disclaimer that triangulation will occur, and no information (for now, anyways) about texture coordinates, materials, etc., will be retained.
 
@@ -49,6 +50,79 @@ const decltype(MeshAuxiliaryData::FADJ)& MeshAuxiliaryData::get_fadj(const MeshP
 		igl::facet_adjacency_matrix(data.F, FADJ);
 	}
 	return FADJ;
+}
+
+const decltype(MeshAuxiliaryData::VN)& MeshAuxiliaryData::get_vertex_normals(const MeshPrimaryData& data)
+{
+	if (!auxiliary_flags.test((size_t)AuxiliaryFlags::VN))
+	{
+		auxiliary_flags.set((size_t)AuxiliaryFlags::VN);
+		igl::per_vertex_normals(data.V, data.F, VN);
+	}
+	return VN;
+}
+
+const decltype(MeshAuxiliaryData::laplacian)& MeshAuxiliaryData::get_laplacian(const MeshPrimaryData& data)
+{
+	if (!auxiliary_flags.test((size_t)AuxiliaryFlags::LAPLACIAN))
+	{
+		auxiliary_flags.set((size_t)AuxiliaryFlags::LAPLACIAN);
+		igl::cotmatrix(data.V, data.F, laplacian);
+		laplacian = (-laplacian).eval(); // TODO check if this works, since igl::cotmatrix generates a negative semi-definite matrix. also test on laplacian-deformation
+	}
+	return laplacian;
+}
+
+const decltype(MeshAuxiliaryData::laplacian_eval)& MeshAuxiliaryData::get_laplacian_eval(const MeshPrimaryData& data)
+{
+	if (!auxiliary_flags.test((size_t)AuxiliaryFlags::LAPLACIAN_EVAL))
+	{
+		auxiliary_flags.set((size_t)AuxiliaryFlags::LAPLACIAN_EVAL);
+		laplacian_eval = get_laplacian(data) * data.V;
+	}
+	return laplacian_eval;
+}
+
+const decltype(MeshAuxiliaryData::laplacian_residuals)& MeshAuxiliaryData::get_laplacian_residuals(const MeshPrimaryData& data)
+{
+	if (!auxiliary_flags.test((size_t)AuxiliaryFlags::LAPLACIAN_RESIDUALS))
+	{
+		auxiliary_flags.set((size_t)AuxiliaryFlags::LAPLACIAN_RESIDUALS);
+		laplacian_residuals = get_laplacian_eval(data).rowwise().norm();
+	}
+	return laplacian_residuals;
+}
+
+const decltype(MeshAuxiliaryData::mass)& MeshAuxiliaryData::get_mass(const MeshPrimaryData& data)
+{
+	if (!auxiliary_flags.test((size_t)AuxiliaryFlags::MASS))
+	{
+		auxiliary_flags.set((size_t)AuxiliaryFlags::MASS);
+		igl::massmatrix(data.V, data.F, igl::MASSMATRIX_TYPE_VORONOI, mass);
+	}
+	return mass;
+}
+
+const decltype(MeshAuxiliaryData::mean_curvatures)& MeshAuxiliaryData::get_mean_curvatures(const MeshPrimaryData& data)
+{
+	if (!auxiliary_flags.test((size_t)AuxiliaryFlags::MEAN_CURVATURES))
+	{
+		auxiliary_flags.set((size_t)AuxiliaryFlags::MEAN_CURVATURES);
+		Eigen::SparseMatrix<double> mass_inverse;
+		igl::invert_diag(mass, mass_inverse);
+		mean_curvatures = -mass_inverse * get_laplacian_eval(data);
+	}
+	return mean_curvatures;
+}
+
+const decltype(MeshAuxiliaryData::mean_curvature_magnitudes)& MeshAuxiliaryData::get_mean_curvature_magnitudes(const MeshPrimaryData& data)
+{
+	if (!auxiliary_flags.test((size_t)AuxiliaryFlags::MEAN_CURVATURE_MAGNITUDES))
+	{
+		auxiliary_flags.set((size_t)AuxiliaryFlags::MEAN_CURVATURE_MAGNITUDES);
+		mean_curvature_magnitudes = get_mean_curvatures(data).rowwise().norm();
+	}
+	return mean_curvature_magnitudes;
 }
 
 const decltype(MeshAuxiliaryData::connected_submeshes)& MeshAuxiliaryData::get_connected_submeshes(const MeshPrimaryData& data)

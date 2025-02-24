@@ -112,8 +112,6 @@ bool defects::UnpatchedHoles::in_detected_state() const
 	return !boundary_vertices.empty();
 }
 
-// TODO take winding order of adjacent face into account
-
 void defects::UnpatchedHoles::repair_fan(Mesh& mesh, const std::vector<Eigen::Index>& boundary, bool increasing)
 {
 	for (size_t i = 2; i < boundary.size(); ++i)

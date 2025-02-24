@@ -1,27 +1,20 @@
 #include <igl/opengl/glfw/Viewer.h>
 
-#include "defects/UnboundVertices.h"
+#include "defects/NoiseSmoothing.h"
 
 int main()
 {
 	igl::opengl::glfw::Viewer viewer;
 	Mesh mesh;
-	assert(mesh.load("../assets/invalid values.obj"));
+	assert(mesh.load("../assets/noise.obj"));
 
-	defects::UnboundVertices unbound_vertices;
-	unbound_vertices.min_x = -10;
-	unbound_vertices.max_x = 10;
-	unbound_vertices.min_y = -10;
-	unbound_vertices.max_y = 10;
-	unbound_vertices.min_z = -10;
-	unbound_vertices.max_z = 10;
-	unbound_vertices.detect(mesh);
-	unbound_vertices.repair(mesh);
-	
-	mesh.undo();
-	mesh.redo();
+	defects::NoiseSmoothing noise_smoothing;
+	noise_smoothing.detection_method = defects::NoiseSmoothing::DetectionMethod::LAPLACIAN_RESIDUAL;
+	noise_smoothing.smoothing_method = defects::NoiseSmoothing::SmoothingMethod::LAPLACIAN;
+	noise_smoothing.detect(mesh);
+	noise_smoothing.repair(mesh);
 
-	assert(mesh.save("../assets/invalid values - repaired.obj"));
+	assert(mesh.save("../assets/noise - laplacian smoothing - laplacian residual.obj"));
 
 	viewer.data().set_mesh(mesh.get_vertices(), mesh.get_faces());
 	Eigen::MatrixXd vertex_colors(1, 3);

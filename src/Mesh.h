@@ -27,6 +27,15 @@ public:
 	const std::vector<Eigen::Index>& get_adj_face_rows(Eigen::Index vertex_index) const { return aux.get_vfadj_row(*data)[vertex_index]; }
 	const std::vector<Eigen::Index>& get_adj_face_cols(Eigen::Index vertex_index) const { return aux.get_vfadj_col(*data)[vertex_index]; }
 	Eigen::SparseMatrix<int>::InnerIterator get_adj_face_iterator(Eigen::Index face_index) const { return Eigen::SparseMatrix<int>::InnerIterator(aux.get_fadj(*data), face_index); }
+	const Eigen::MatrixXd& get_vertex_normals() const { return aux.get_vertex_normals(*data); }
+	const Eigen::SparseMatrix<double>& get_laplacian() const { return aux.get_laplacian(*data); }
+	Eigen::SparseMatrix<double>::InnerIterator get_laplacian_iterator(Eigen::Index vertex_index) const { return Eigen::SparseMatrix<double>::InnerIterator(aux.get_laplacian(*data), vertex_index); }
+	const Eigen::MatrixXd& get_laplacian_eval() const { return aux.get_laplacian_eval(*data); }
+	const Eigen::VectorXd& get_laplacian_residuals() const { return aux.get_laplacian_residuals(*data); }
+	Eigen::SparseMatrix<double>::InnerIterator get_mass_iterator(Eigen::Index vertex_index) const { return Eigen::SparseMatrix<double>::InnerIterator(aux.get_mass(*data), vertex_index); }
+	const Eigen::MatrixXd& get_mean_curvatures() const { return aux.get_mean_curvatures(*data); }
+	const Eigen::VectorXd& get_mean_curvature_magnitudes() const { return aux.get_mean_curvature_magnitudes(*data); }
+
 	const std::vector<std::vector<Eigen::Index>>& get_connected_submeshes() const { return aux.get_connected_submeshes(*data); }
 	size_t connected_submesh_index(Eigen::Index submesh_root) const { return aux.get_connected_submesh_roots(*data).find(submesh_root)->second; }
 	const std::vector<Eigen::Index>& get_connected_submesh(Eigen::Index submesh_root) const { return aux.get_connected_submeshes(*data)[connected_submesh_index(submesh_root)]; }
