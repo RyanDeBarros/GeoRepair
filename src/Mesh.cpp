@@ -33,16 +33,24 @@ void Mesh::push()
 	aux.reset();
 }
 
-void Mesh::undo()
+bool Mesh::undo()
 {
 	if (auto new_data = history.undo())
+	{
 		data = std::move(new_data);
+		return true;
+	}
+	return false;
 }
 
-void Mesh::redo()
+bool Mesh::redo()
 {
 	if (auto new_data = history.redo())
+	{
 		data = std::move(new_data);
+		return true;
+	}
+	return false;
 }
 
 static void traverse_submesh_dfs(const Eigen::SparseMatrix<int>& fadj, Eigen::Index face_index, std::vector<bool>& visited_faces, const std::function<void(Eigen::Index face1, Eigen::Index face2)>& adj_process)

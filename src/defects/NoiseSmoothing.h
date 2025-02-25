@@ -19,13 +19,13 @@ namespace defects
 			LAPLACIAN_RESIDUAL,
 			MEAN_CURVATURE,
 			FEATURE_SENSITIVE, // combines laplacian residual and mean curvature
-			FOURIER // expensive
+			EIGEN_VALUES // expensive
 		} detection_method = DetectionMethod::FEATURE_SENSITIVE;
 
 		double laplacian_tolerance = 1.0; // must be positive - only used for LAPLACIAN_RESIDUAL and FEATURE_SENSITIVE
 		double curvature_tolerance = 1.0; // must be positive - only used for MEAN_CURVATURE and FEATURE_SENSITIVE
-		int eigen_count = 10; // must be positive - only used for FOURIER
-		double eigen_value_threshold = 1.0; // must be positive - only used for FOURIER
+		int eigen_count = 10; // must be positive - only used for EIGEN_VALUES
+		double eigen_value_threshold = 1.0; // must be positive - only used for EIGEN_VALUES
 
 		enum class SmoothingMethod
 		{
@@ -49,7 +49,7 @@ namespace defects
 		void detect_laplacian_residual(const Mesh& mesh);
 		void detect_mean_curvature(const Mesh& mesh);
 		void detect_feature_sensitive(const Mesh& mesh);
-		void detect_fourier(const Mesh& mesh);
+		void detect_eigen_values(const Mesh& mesh);
 
 		void repair_laplacian(Mesh& mesh);
 		void repair_taubin(Mesh& mesh);

@@ -68,7 +68,7 @@ const decltype(MeshAuxiliaryData::laplacian)& MeshAuxiliaryData::get_laplacian(c
 	{
 		auxiliary_flags.set((size_t)AuxiliaryFlags::LAPLACIAN);
 		igl::cotmatrix(data.V, data.F, laplacian);
-		laplacian = (-laplacian).eval(); // TODO check if this works, since igl::cotmatrix generates a negative semi-definite matrix. also test on laplacian-deformation
+		laplacian = (-laplacian).eval();
 	}
 	return laplacian;
 }
@@ -109,7 +109,7 @@ const decltype(MeshAuxiliaryData::mean_curvatures)& MeshAuxiliaryData::get_mean_
 	{
 		auxiliary_flags.set((size_t)AuxiliaryFlags::MEAN_CURVATURES);
 		Eigen::SparseMatrix<double> mass_inverse;
-		igl::invert_diag(mass, mass_inverse);
+		igl::invert_diag(get_mass(data), mass_inverse);
 		mean_curvatures = -mass_inverse * get_laplacian_eval(data);
 	}
 	return mean_curvatures;

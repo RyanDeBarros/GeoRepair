@@ -40,7 +40,7 @@ class MeshAuxiliaryData
 	Eigen::VectorXd laplacian_residuals;
 	Eigen::SparseMatrix<double> mass;
 	Eigen::MatrixXd mean_curvatures;
-	Eigen::MatrixXd mean_curvature_magnitudes;
+	Eigen::VectorXd mean_curvature_magnitudes;
 	std::vector<std::vector<Eigen::Index>> connected_submeshes;
 	std::unordered_map<Eigen::Index, size_t> connected_submesh_roots;
 

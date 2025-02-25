@@ -1,5 +1,7 @@
 #include "NoiseSmoothing.h"
 
+// TODO test all detection and smoothing methods
+
 void defects::NoiseSmoothing::_detect(const Mesh& mesh)
 {
 	void(defects::NoiseSmoothing::*detect_func)(const Mesh&) = nullptr;
@@ -14,8 +16,8 @@ void defects::NoiseSmoothing::_detect(const Mesh& mesh)
 	case DetectionMethod::FEATURE_SENSITIVE:
 		detect_func = &defects::NoiseSmoothing::detect_feature_sensitive;
 		break;
-	case DetectionMethod::FOURIER:
-		detect_func = &defects::NoiseSmoothing::detect_fourier;
+	case DetectionMethod::EIGEN_VALUES:
+		detect_func = &defects::NoiseSmoothing::detect_eigen_values;
 		break;
 	}
 
@@ -103,7 +105,7 @@ void defects::NoiseSmoothing::detect_feature_sensitive(const Mesh& mesh)
 	}
 }
 
-void defects::NoiseSmoothing::detect_fourier(const Mesh& mesh)
+void defects::NoiseSmoothing::detect_eigen_values(const Mesh& mesh)
 {
 	eigen_decomposition_largest(mesh.get_laplacian(), eigen_count, eigen_vectors, eigen_values);
 	for (Eigen::Index i = 0; i < eigen_count; ++i)

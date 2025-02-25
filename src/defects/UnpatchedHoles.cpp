@@ -2,6 +2,8 @@
 
 #include <igl/boundary_loop.h>
 
+// TODO split concave n-gons into convex sub-n-gons so there's no z-fighting with new faces
+
 void defects::UnpatchedHoles::_detect(const Mesh& mesh)
 {
 	igl::boundary_loop(mesh.get_faces(), boundary_vertices);

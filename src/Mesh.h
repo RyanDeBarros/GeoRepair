@@ -15,8 +15,8 @@ public:
 	bool save(const char* filename);
 
 	void push();
-	void undo();
-	void redo();
+	bool undo();
+	bool redo();
 
 	const decltype(data->V)& get_vertices() const { return data->V; }
 	decltype(data->V)& get_vertices() { return data->V; }
