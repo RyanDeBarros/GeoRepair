@@ -73,6 +73,11 @@ public:
 #undef condition
 	}
 
+	defects::DefectBase& operator[](Defect defect)
+	{
+		return *list[defect];
+	}
+
 	void reset_all()
 	{
 		for (auto& defect : list)
