@@ -22,6 +22,7 @@ void defects::NonManifoldEdges::reset()
 {
     non_manifold_edges.clear();
     edge_counts.clear();
+    max_edge_count = 0;
 }
 
 bool defects::NonManifoldEdges::in_detected_state() const
@@ -37,14 +38,12 @@ void defects::NonManifoldEdges::add_undirected_edge(Eigen::Index v1, Eigen::Inde
     {
         ++it->second;
         if (it->second > 2)
+        {
             non_manifold_edges.insert(edge);
+            if (it->second > max_edge_count)
+                max_edge_count = it->second;
+        }
     }
     else
         edge_counts[edge] = 1;
-}
-
-void defects::NonManifoldEdges::traverse_non_manifold_edges(const std::function<void(Eigen::Index v1, Eigen::Index v2, size_t count)>& process) const
-{
-    for (auto iter = non_manifold_edges.begin(); iter != non_manifold_edges.end(); ++iter)
-        process(iter->v1, iter->v2, edge_counts.find(*iter)->second);
 }

@@ -35,11 +35,15 @@ private:
 	void load_mesh();
 	void save_mesh(const char* filename);
 	void save_mesh();
+	igl::opengl::ViewerData& mesh_data() { return viewer.data(0); }
+	igl::opengl::ViewerData& edge_data() { return viewer.data(1); }
 	void render_gui();
 	void refresh_mesh();
 
 	void undo();
 	void redo();
+	void clear_visualisation();
+	void restore_visualisation();
 
 	// TODO option to detect all and repair all in menu
 
@@ -75,22 +79,28 @@ private:
 
 	struct
 	{
-		ImVec4 detected = ImVec4(0.3f, 0.65f, 0.35f, 1.0f);
-	} style_colors;
-
-	struct
-	{
-		Eigen::RowVector3d neutral = Eigen::RowVector3d(0.5, 0.5, 0.5);
-		Eigen::RowVector3d defective = Eigen::RowVector3d(0.9, 0.3, 0.3);
-		Eigen::RowVector3d defective_low = Eigen::RowVector3d(0.7, 0.3, 0.6);
-	} mesh_vertex_colors;
-
-	struct
-	{
-		Eigen::RowVector3d neutral = Eigen::RowVector3d(1.0, 0.894, 0.235);
-		Eigen::RowVector3d defective = Eigen::RowVector3d(1.0, 0.0, 0.784);
-		Eigen::RowVector3d defective_alt = Eigen::RowVector3d(0.392, 1.0, 0.392);
-	} mesh_face_colors;
+		struct
+		{
+			ImVec4 detected = ImVec4(0.3f, 0.65f, 0.35f, 1.0f);
+		} style;
+		struct
+		{
+			Eigen::RowVector3d neutral = Eigen::RowVector3d(0.5, 0.5, 0.5);
+			Eigen::RowVector3d defective = Eigen::RowVector3d(0.9, 0.3, 0.3);
+			Eigen::RowVector3d defective_low = Eigen::RowVector3d(0.7, 0.3, 0.6);
+		} vertex;
+		struct
+		{
+			Eigen::RowVector3d neutral = Eigen::RowVector3d(1.0, 0.894, 0.235);
+			Eigen::RowVector3d defective = Eigen::RowVector3d(1.0, 0.0, 0.784);
+			Eigen::RowVector3d defective_alt = Eigen::RowVector3d(0.392, 1.0, 0.392);
+		} face;
+		struct
+		{
+			Eigen::RowVector3d defective = Eigen::RowVector3d(0.0, 1.0, 0.0);
+			Eigen::RowVector3d defective_alt = Eigen::RowVector3d(0.0, 0.7, 0.7);
+		} edge;
+	} colors;
 };
 
 int main()
@@ -146,6 +156,12 @@ bool GeoRepair::handle_key_down(int key, int modifiers)
 			return true;
 		}
 		return false;
+	case GLFW_KEY_C:
+		if (modifiers & GLFW_MOD_SHIFT)
+			restore_visualisation();
+		else
+			clear_visualisation();
+		return true;
 	}
 	return false;
 }
@@ -169,13 +185,20 @@ void GeoRepair::init()
 			glfwSetDropCallback(viewer.window, &path_drop_callback);
 			return false;
 		};
-	viewer.data().point_size = 8.0f;
+	mesh_data().point_size = 8.0f;
+
+	viewer.append_mesh(); // append edge mesh
+	edge_data().show_faces = false;
+	edge_data().line_width = 7.5f;
 }
 
 void GeoRepair::load_mesh(const char* filename)
 {
 	if (mesh.load(filename))
+	{
 		refresh_mesh();
+		reset_colors();
+	}
 }
 
 void GeoRepair::load_mesh()
@@ -216,11 +239,10 @@ void GeoRepair::render_gui()
 
 void GeoRepair::refresh_mesh()
 {
-	auto& data = viewer.data();
-	data.clear();
-	data.set_mesh(mesh.get_vertices(), mesh.get_faces());
-	data.set_points(mesh.get_vertices(), mesh.get_vertex_colors());
-	data.set_face_based(true);
+	mesh_data().clear();
+	mesh_data().set_mesh(mesh.get_vertices(), mesh.get_faces());
+	mesh_data().set_points(mesh.get_vertices(), mesh.get_vertex_colors());
+	mesh_data().set_face_based(true);
 	defect_list.reset_all();
 }
 
@@ -234,6 +256,17 @@ void GeoRepair::redo()
 {
 	if (mesh.redo())
 		refresh_mesh();
+}
+
+void GeoRepair::clear_visualisation()
+{
+	reset_colors();
+}
+
+void GeoRepair::restore_visualisation()
+{
+	mesh_data().set_points(mesh.get_vertices(), mesh.get_vertex_colors());
+	// TODO set face/edge colors -> store face/edge colors in primary data
 }
 
 void GeoRepair::render_menu_gui()
@@ -255,13 +288,10 @@ void GeoRepair::render_menu_gui()
 			if (ImGui::MenuItem("Redo", "Ctrl+Shft+Z"))
 				redo();
 			ImGui::Separator();
-			if (ImGui::MenuItem("Clear visualization"))
-				reset_colors();
-			if (ImGui::MenuItem("Restore visualization"))
-			{
-				viewer.data().set_points(mesh.get_vertices(), mesh.get_vertex_colors());
-				// TODO set face/edge colors -> store face/edge colors in primary data
-			}
+			if (ImGui::MenuItem("Clear visualization", "C"))
+				clear_visualisation();
+			if (ImGui::MenuItem("Restore visualization", "Shft+C"))
+				restore_visualisation();
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();
@@ -270,7 +300,7 @@ void GeoRepair::render_menu_gui()
 
 #define render_defect_gui_header(defect)\
 	bool detected = defect_list[defect].in_detected_state();\
-	if (detected) ImGui::PushStyleColor(ImGuiCol_Header, style_colors.detected);\
+	if (detected) ImGui::PushStyleColor(ImGuiCol_Header, colors.style.detected);\
 	if (opened_header != -1 && opened_header != defect)\
 		ImGui::SetNextItemOpen(false);
 #define render_defect_gui_footer(defect)\
@@ -615,7 +645,7 @@ void GeoRepair::message_no_detection()
 	}
 }
 
-static void detect_success_for_degenerate_vertex_patch(igl::opengl::glfw::Viewer& viewer, Mesh& mesh,
+static void detect_success_for_degenerate_vertex_patch(igl::opengl::ViewerData& viewer_data, Mesh& mesh,
 	const defects::DegenerateVertexPatch& degenerate_vertex_patch, const Eigen::RowVector3d& neutral_color, const Eigen::RowVector3d& defective_color)
 {
 	auto& vertex_colors = mesh.get_vertex_colors();
@@ -628,10 +658,10 @@ static void detect_success_for_degenerate_vertex_patch(igl::opengl::glfw::Viewer
 		else
 			vertex_colors.row(i) = neutral_color;
 	}
-	viewer.data().set_points(mesh.get_vertices(), vertex_colors);
+	viewer_data.set_points(mesh.get_vertices(), vertex_colors);
 }
 
-static void detect_success_for_duplicate_faces(igl::opengl::glfw::Viewer& viewer, Mesh& mesh,
+static void detect_success_for_duplicate_faces(igl::opengl::ViewerData& viewer_data, Mesh& mesh,
 	const defects::DuplicateFaces& duplicate_faces, const Eigen::RowVector3d& neutral_color, const Eigen::RowVector3d& defective_color)
 {
 	Eigen::MatrixXd face_colors(mesh.get_faces().rows(), 3);
@@ -653,24 +683,24 @@ static void detect_success_for_duplicate_faces(igl::opengl::glfw::Viewer& viewer
 		else
 			face_colors.row(i) = neutral_color;
 	}
-	viewer.data().set_colors(face_colors);
+	viewer_data.set_colors(face_colors);
 }
 
 void GeoRepair::degenerate_faces_detect_success()
 {
 	const auto& degenerate_faces = defect_list.get<Defect::DEGENERATE_FACES>();
-	detect_success_for_degenerate_vertex_patch(viewer, mesh, degenerate_faces.get_degenerate_vertex_patch(), mesh_vertex_colors.neutral, mesh_vertex_colors.defective);
-	detect_success_for_duplicate_faces(viewer, mesh, degenerate_faces.get_duplicate_faces(), mesh_face_colors.neutral, mesh_face_colors.defective);
+	detect_success_for_degenerate_vertex_patch(mesh_data(), mesh, degenerate_faces.get_degenerate_vertex_patch(), colors.vertex.neutral, colors.vertex.defective);
+	detect_success_for_duplicate_faces(mesh_data(), mesh, degenerate_faces.get_duplicate_faces(), colors.face.neutral, colors.face.defective);
 }
 
 void GeoRepair::degenerate_vertex_patch_detect_success()
 {
-	detect_success_for_degenerate_vertex_patch(viewer, mesh, defect_list.get<Defect::DEGENERATE_VERTEX_PATCH>(), mesh_vertex_colors.neutral, mesh_vertex_colors.defective);
+	detect_success_for_degenerate_vertex_patch(mesh_data(), mesh, defect_list.get<Defect::DEGENERATE_VERTEX_PATCH>(), colors.vertex.neutral, colors.vertex.defective);
 }
 
 void GeoRepair::duplicate_faces_detect_success()
 {
-	detect_success_for_duplicate_faces(viewer, mesh, defect_list.get<Defect::DUPLICATE_FACES>(), mesh_face_colors.neutral, mesh_face_colors.defective);
+	detect_success_for_duplicate_faces(mesh_data(), mesh, defect_list.get<Defect::DUPLICATE_FACES>(), colors.face.neutral, colors.face.defective);
 }
 
 void GeoRepair::general_duplicate_vertices_detect_success()
@@ -685,44 +715,44 @@ void GeoRepair::general_duplicate_vertices_detect_success()
 	{
 		auto it = squared_distances.find(i);
 		if (it != squared_distances.end())
-			vertex_colors.row(i) = mesh_vertex_colors.defective + it->second / squared_tolerance * (mesh_vertex_colors.defective_low - mesh_vertex_colors.defective);
+			vertex_colors.row(i) = colors.vertex.defective + it->second / squared_tolerance * (colors.vertex.defective_low - colors.vertex.defective);
 		else
-			vertex_colors.row(i) = mesh_vertex_colors.neutral;
+			vertex_colors.row(i) = colors.vertex.neutral;
 	}
-	viewer.data().set_points(mesh.get_vertices(), vertex_colors);
+	mesh_data().set_points(mesh.get_vertices(), vertex_colors);
 }
 
 void GeoRepair::inverted_normals_detect_success()
 {
 	const auto& inverted_normals = defect_list.get<Defect::INVERTED_NORMALS>();
-	Eigen::MatrixXd face_colors = mesh_face_colors.neutral.replicate(mesh.get_faces().rows(), 1);
+	Eigen::MatrixXd face_colors = colors.face.neutral.replicate(mesh.get_faces().rows(), 1);
 	
 	const auto& flip_faces = inverted_normals.get_flip_faces();
 	for (const auto& flip_face_vector : flip_faces)
 		for (Eigen::Index i : flip_face_vector)
-			face_colors.row(i) = mesh_face_colors.defective;
+			face_colors.row(i) = colors.face.defective;
 
 	const auto& submesh_roots = inverted_normals.get_submesh_roots();
 	for (Eigen::Index submesh_root : submesh_roots)
 	{
-		if (face_colors.row(submesh_root) == mesh_face_colors.neutral)
-			face_colors.row(submesh_root) = mesh_face_colors.defective_alt;
+		if (face_colors.row(submesh_root) == colors.face.neutral)
+			face_colors.row(submesh_root) = colors.face.defective_alt;
 		mesh.traverse_connected_submesh(submesh_root, [&](Eigen::Index, Eigen::Index f) {
-			if (face_colors.row(f) == mesh_face_colors.neutral)
-				face_colors.row(f) = mesh_face_colors.defective_alt;
+			if (face_colors.row(f) == colors.face.neutral)
+				face_colors.row(f) = colors.face.defective_alt;
 			});
 	}
 
 	const auto& flip_entire_submesh_roots = inverted_normals.get_flip_entire_submesh_roots();
 	for (Eigen::Index submesh_root : flip_entire_submesh_roots)
 	{
-		face_colors.row(submesh_root) = mesh_face_colors.defective;
+		face_colors.row(submesh_root) = colors.face.defective;
 		mesh.traverse_connected_submesh(submesh_root, [&](Eigen::Index, Eigen::Index f) {
-			face_colors.row(f) = mesh_face_colors.defective;
+			face_colors.row(f) = colors.face.defective;
 			});
 	}
 
-	viewer.data().set_colors(face_colors);
+	mesh_data().set_colors(face_colors);
 }
 
 void GeoRepair::noise_smoothing_detect_success()
@@ -732,12 +762,71 @@ void GeoRepair::noise_smoothing_detect_success()
 
 void GeoRepair::non_manifold_edges_detect_success()
 {
-	// TODO
+	const auto& vertices = mesh.get_vertices();
+	edge_data().clear_edges();
+
+	const auto& defect = defect_list.get<Defect::NON_MANIFOLD_EDGES>();
+	const auto& edges = defect.get_non_manifold_edges();
+	const auto& counts = defect.get_edge_counts();
+	double max_surplus = defect.get_max_edge_count() - 3;
+	
+	Eigen::MatrixXd P1(edges.size(), 3);
+	Eigen::MatrixXd P2(edges.size(), 3);
+	Eigen::MatrixXd C(edges.size(), 3);
+
+	Eigen::Index i = 0;
+	for (auto iter = edges.begin(); iter != edges.end(); ++iter)
+	{
+		P1.row(i) = vertices.row(iter->v1);
+		P2.row(i) = vertices.row(iter->v2);
+		if (max_surplus > 1.0)
+		{
+			double factor = (counts.find(*iter)->second - 3) / max_surplus;
+			C.row(i) = colors.edge.defective_alt + factor * (colors.edge.defective - colors.edge.defective_alt);
+		}
+		else
+			C.row(i) = colors.edge.defective;
+		++i;
+	}
+
+	edge_data().add_edges(P1, P2, C);
 }
 
 void GeoRepair::null_faces_detect_success()
 {
-	// TODO since faces are null, highlight the edges/vertices instead
+	const auto& vertices = mesh.get_vertices();
+	const auto& faces = mesh.get_faces();
+	auto& vertex_colors = mesh.get_vertex_colors();
+	vertex_colors = colors.vertex.neutral.replicate(vertices.rows(), 1);
+	edge_data().clear_edges();
+
+	const auto& indices = defect_list.get<Defect::NULL_FACES>().get_null_face_indices();
+	Eigen::MatrixXd P1(3 * indices.size(), 3);
+	Eigen::MatrixXd P2(3 * indices.size(), 3);
+	Eigen::MatrixXd C(3 * indices.size(), 3);
+	for (Eigen::Index i = 0; i < indices.size(); ++i)
+	{
+		Eigen::Index fi = indices[i];
+		Eigen::RowVector3i face = faces.row(fi);
+		P1.row(3 * i) = vertices.row(face(0));
+		P1.row(3 * i + 1) = vertices.row(face(1));
+		P1.row(3 * i + 2) = vertices.row(face(2));
+		P2.row(3 * i) = vertices.row(face(1));
+		P2.row(3 * i + 1) = vertices.row(face(2));
+		P2.row(3 * i + 2) = vertices.row(face(0));
+		C.row(3 * i) = colors.edge.defective;
+		C.row(3 * i + 1) = colors.edge.defective;
+		C.row(3 * i + 2) = colors.edge.defective;
+		if (face(0) == face(1) && face(0) == face(2))
+		{
+			vertex_colors.row(face(0)) = colors.vertex.defective;
+			vertex_colors.row(face(1)) = colors.vertex.defective;
+			vertex_colors.row(face(2)) = colors.vertex.defective;
+		}
+	}
+
+	mesh_data().set_points(mesh.get_vertices(), vertex_colors);
+	edge_data().add_edges(P1, P2, C);
 }
 
 void GeoRepair::unbound_vertices_detect_success()
@@ -750,23 +839,41 @@ void GeoRepair::unbound_vertices_detect_success()
 	{
 		if (uvx < unbound_vertices.size() && unbound_vertices[uvx] == i)
 		{
-			vertex_colors.row(i) = mesh_vertex_colors.defective;
+			vertex_colors.row(i) = colors.vertex.defective;
 			++uvx;
 		}
 		else
-			vertex_colors.row(i) = mesh_vertex_colors.neutral;
+			vertex_colors.row(i) = colors.vertex.neutral;
 	}
-	viewer.data().set_points(mesh.get_vertices(), vertex_colors);
+	mesh_data().set_points(mesh.get_vertices(), vertex_colors);
 }
 
 void GeoRepair::unpatched_holes_detect_success()
 {
-	// TODO
+	edge_data().clear_edges();
+	const auto& vertices = mesh.get_vertices();
+	const auto& boundaries = defect_list.get<Defect::UNPATCHED_HOLES>().get_boundary_vertices();
+	for (const auto& boundary : boundaries)
+	{
+		Eigen::MatrixXd P1(boundary.size(), 3);
+		Eigen::MatrixXd P2(boundary.size(), 3);
+		Eigen::MatrixXd C(boundary.size(), 3);
+		for (size_t i = 0; i < boundary.size(); ++i)
+		{
+			P1.row(i) = vertices.row(boundary[i]);
+			if (i == 0)
+				P2.row(i) = vertices.row(boundary[boundary.size() - 1]);
+			else
+				P2.row(i) = vertices.row(boundary[i - 1]);
+			C.row(i) = colors.edge.defective;
+		}
+		edge_data().add_edges(P1, P2, C);
+	}
 }
 
 void GeoRepair::reset_colors()
 {
-	viewer.data().set_points(mesh.get_vertices(), mesh_vertex_colors.neutral);
-	viewer.data().clear_edges();
-	viewer.data().set_colors(mesh_face_colors.neutral.replicate(mesh.get_faces().rows(), 1));
+	mesh_data().set_points(mesh.get_vertices(), colors.vertex.neutral);
+	mesh_data().set_colors(colors.face.neutral.replicate(mesh.get_faces().rows(), 1));
+	edge_data().clear_edges();
 }

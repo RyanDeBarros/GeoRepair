@@ -149,13 +149,13 @@ void defects::NoiseSmoothing::repair_laplacian(Mesh& mesh)
 void defects::NoiseSmoothing::repair_taubin(Mesh& mesh)
 {
 	auto& vertices = mesh.get_vertices();
-	laplacian_smoothing(vertices, noisy_vertices, mesh.get_laplacian_eval(), laplacian_smoothing_factor);
+	laplacian_smoothing(vertices, noisy_vertices, mesh.get_laplacian_eval(), taubin_shrinking_factor);
 	const auto& laplacian = mesh.get_laplacian();
-	laplacian_smoothing(vertices, noisy_vertices, laplacian, -taubin_counter_smoothing_factor);
-	for (int i = 1; i < laplacian_iterations; ++i)
+	laplacian_smoothing(vertices, noisy_vertices, laplacian, taubin_expanding_factor);
+	for (int i = 1; i < taubin_iterations; ++i)
 	{
-		laplacian_smoothing(vertices, noisy_vertices, laplacian, laplacian_smoothing_factor);
-		laplacian_smoothing(vertices, noisy_vertices, laplacian, -taubin_counter_smoothing_factor);
+		laplacian_smoothing(vertices, noisy_vertices, laplacian, taubin_shrinking_factor);
+		laplacian_smoothing(vertices, noisy_vertices, laplacian, taubin_expanding_factor);
 	}
 }
 
@@ -182,20 +182,21 @@ void defects::NoiseSmoothing::repair_desbrun(Mesh& mesh)
 {
 	auto& vertices = mesh.get_vertices();
 	desbrun_smoothing(vertices, noisy_vertices, mesh.get_laplacian_eval(), mesh.get_vertex_normals(), laplacian_smoothing_factor);
-	if (laplacian_iterations > 1)
+	if (desbrun_iterations > 1)
 	{
 		const auto& laplacian = mesh.get_laplacian();
 		for (int i = 1; i < laplacian_iterations; ++i)
 		{
 			Eigen::MatrixXd normals;
 			igl::per_vertex_normals(vertices, mesh.get_faces(), normals); // TODO later only re-compute normals for noisy vertices
-			desbrun_smoothing(vertices, noisy_vertices, laplacian, normals, laplacian_smoothing_factor);
+			desbrun_smoothing(vertices, noisy_vertices, laplacian, normals, desbrun_smoothing_factor);
 		}
 	}
 }
 
 void defects::NoiseSmoothing::repair_bilateral(Mesh& mesh)
 {
+	// TODO should this have an iterations parameter?
 	auto& vertices = mesh.get_vertices();
 	const auto& normals = mesh.get_vertex_normals();
 	std::vector<Eigen::RowVector3d> new_vertices;

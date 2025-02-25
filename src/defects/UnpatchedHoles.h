@@ -31,5 +31,7 @@ namespace defects
 			CLIP,
 			PIE
 		} patch_method = PatchMethod::STRIP;
+
+		const decltype(boundary_vertices)& get_boundary_vertices() const { return boundary_vertices; }
 	};
 }

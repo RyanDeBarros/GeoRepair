@@ -36,10 +36,13 @@ namespace defects
 
 		// TODO consider an option to ignore boundary vertices
 
-		double laplacian_smoothing_factor = 0.6; // must be between 0.0 and 1.0 - only used for LAPLACIAN and TAUBIN
-		int laplacian_iterations = 3; // must be > 1 - only used for LAPLACIAN and TAUBIN
-		double taubin_counter_smoothing_factor = 0.8; // must be between laplacian_smoothing_factor and 1.0 - only used for TAUBIN
-		double desbrun_smoothing_factor = 0.5; // must be between 0.0 and 1.0 - only used for DESBRUN
+		int laplacian_iterations = 3; // must be > 0 - only used for LAPLACIAN
+		double laplacian_smoothing_factor = 0.3; // must be between 0.0 and 1.0 / laplacian_iterations - only used for LAPLACIAN
+		int taubin_iterations = 3; // must be > 0 - only used for TAUBIN
+		double taubin_shrinking_factor = 0.6; // must be positive, and such that taubin_shrinking_factor + taubin_expanding_factor < 1.0 / taubin_iterations - only used for TAUBIN
+		double taubin_expanding_factor = -0.4; // must be negative, and such that taubin_shrinking_factor + taubin_expanding_factor < 1.0 / taubin_iterations - only used for TAUBIN
+		int desbrun_iterations = 3; // must be > 0 - only used for DESBRUN
+		double desbrun_smoothing_factor = 0.5; // must be between 0.0 and 1.0 / desbrun_iterations - only used for DESBRUN
 		double bilateral_closeness_factor = 1.0; // must be > 0.0 - only used for BILATERAL
 		double bilateral_similarity_factor = 1.0; // must be > 0.0 - only used for BILATERAL
 		double bilateral_smoothing_factor = 0.5; // must be between 0.0 and 1.0 - only used for BILATERAL
