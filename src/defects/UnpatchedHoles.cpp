@@ -6,7 +6,7 @@
 
 void defects::UnpatchedHoles::_detect(const Mesh& mesh)
 {
-	igl::boundary_loop(mesh.get_faces(), boundary_vertices);
+	igl::boundary_loop(mesh.get_faces(), boundary_vertices); // TODO move to auxiliary ?
 }
 
 void defects::UnpatchedHoles::_repair(Mesh& mesh)

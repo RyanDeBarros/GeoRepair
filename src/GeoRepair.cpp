@@ -271,22 +271,105 @@ void GeoRepair::render_degenerate_faces_gui()
 
 void GeoRepair::render_degenerate_vertex_patch_gui()
 {
-	// TODO
+	if (opened_header != -1 && opened_header != Defect::DEGENERATE_VERTEX_PATCH)
+		ImGui::SetNextItemOpen(false);
+	if (ImGui::CollapsingHeader("Degenerate Vertex Patches"))
+	{
+		opened_header = Defect::DEGENERATE_VERTEX_PATCH;
+		auto& degenerate_vertex_patch = defect_list.get<Defect::DEGENERATE_VERTEX_PATCH>();
+		bool reset = false;
+
+		double tolerance = degenerate_vertex_patch.tolerance;
+		if (ImGui::InputDouble("Tolerance", &tolerance))
+		{
+			tolerance = std::max(tolerance, 0.0);
+			if (tolerance != degenerate_vertex_patch.tolerance)
+			{
+				degenerate_vertex_patch.tolerance = tolerance;
+				reset = true;
+			}
+		}
+
+		if (reset)
+			degenerate_vertex_patch.reset();
+
+		render_defect_base_buttons(Defect::DEGENERATE_VERTEX_PATCH, &GeoRepair::degenerate_vertex_patch_detect_success);
+	}
+	else if (opened_header == Defect::DEGENERATE_VERTEX_PATCH)
+		opened_header = -1;
 }
 
 void GeoRepair::render_duplicate_faces_gui()
 {
-	// TODO
+	if (opened_header != -1 && opened_header != Defect::DUPLICATE_FACES)
+		ImGui::SetNextItemOpen(false);
+	if (ImGui::CollapsingHeader("Duplicate Faces"))
+	{
+		opened_header = Defect::DUPLICATE_FACES;
+		auto& duplicate_faces = defect_list.get<Defect::DUPLICATE_FACES>();
+		bool reset = false;
+
+		if (ImGui::Checkbox("Ignore normals", &duplicate_faces.ignore_normals))
+			reset = true;
+
+		if (reset)
+			duplicate_faces.reset();
+
+		render_defect_base_buttons(Defect::DUPLICATE_FACES, &GeoRepair::duplicate_faces_detect_success);
+	}
+	else if (opened_header == Defect::DUPLICATE_FACES)
+		opened_header = -1;
 }
 
 void GeoRepair::render_general_duplicate_vertices_gui()
 {
-	// TODO
+	if (opened_header != -1 && opened_header != Defect::GENERAL_DUPLICATE_VERTICES)
+		ImGui::SetNextItemOpen(false);
+	if (ImGui::CollapsingHeader("Duplicate Vertices"))
+	{
+		opened_header = Defect::GENERAL_DUPLICATE_VERTICES;
+		auto& general_duplicate_vertices = defect_list.get<Defect::GENERAL_DUPLICATE_VERTICES>();
+		bool reset = false;
+
+		double tolerance = general_duplicate_vertices.tolerance;
+		if (ImGui::InputDouble("Tolerance", &tolerance))
+		{
+			tolerance = std::max(tolerance, 0.0);
+			if (tolerance != general_duplicate_vertices.tolerance)
+			{
+				general_duplicate_vertices.tolerance = tolerance;
+				reset = true;
+			}
+		}
+
+		if (reset)
+			general_duplicate_vertices.reset();
+
+		render_defect_base_buttons(Defect::GENERAL_DUPLICATE_VERTICES, &GeoRepair::general_duplicate_vertices_detect_success);
+	}
+	else if (opened_header == Defect::GENERAL_DUPLICATE_VERTICES)
+		opened_header = -1;
 }
 
 void GeoRepair::render_inverted_normals_gui()
 {
-	// TODO
+	if (opened_header != -1 && opened_header != Defect::INVERTED_NORMALS)
+		ImGui::SetNextItemOpen(false);
+	if (ImGui::CollapsingHeader("Inverted Normals"))
+	{
+		opened_header = Defect::INVERTED_NORMALS;
+		auto& inverted_normals = defect_list.get<Defect::INVERTED_NORMALS>();
+
+		if (ImGui::Button("Flip All"))
+		{
+			inverted_normals.flip(mesh);
+			refresh_mesh();
+		}
+
+		render_defect_base_buttons(Defect::INVERTED_NORMALS, &GeoRepair::inverted_normals_detect_success);
+	}
+	else if (opened_header == Defect::INVERTED_NORMALS)
+		opened_header = -1;
 }
 
 void GeoRepair::render_noise_smoothing_gui()
@@ -331,8 +414,6 @@ void GeoRepair::render_noise_smoothing_gui()
 			}
 			ImGui::EndCombo();
 		}
-		if ((int)noise_smoothing.smoothing_method != prev_combo)
-			reset = true;
 
 		// TODO noise smoothing parameters
 
@@ -347,22 +428,118 @@ void GeoRepair::render_noise_smoothing_gui()
 
 void GeoRepair::render_non_manifold_edges_gui()
 {
-	// TODO
+	if (opened_header != -1 && opened_header != Defect::NON_MANIFOLD_EDGES)
+		ImGui::SetNextItemOpen(false);
+	if (ImGui::CollapsingHeader("Non-Manifold Edges"))
+	{
+		if (ImGui::IsItemHovered())
+			ImGui::SetTooltip("No specific repair function supported for non-manifold edges.");
+		opened_header = Defect::NON_MANIFOLD_EDGES;
+		auto& non_manifold_edges = defect_list.get<Defect::NON_MANIFOLD_EDGES>();
+
+		ImGui::BeginDisabled(non_manifold_edges.in_detected_state());
+		if (ImGui::Button("Detect"))
+		{
+			non_manifold_edges.detect(mesh);
+			if (non_manifold_edges.in_detected_state())
+				non_manifold_edges_detect_success();
+			else
+				no_detection = true;
+		}
+		ImGui::SameLine();
+		ImGui::EndDisabled();
+		ImGui::BeginDisabled(!non_manifold_edges.in_detected_state());
+		if (ImGui::Button("Reset"))
+			non_manifold_edges.reset();
+		ImGui::EndDisabled();
+	}
+	else if (opened_header == Defect::NON_MANIFOLD_EDGES)
+		opened_header = -1;
 }
 
 void GeoRepair::render_null_faces_gui()
 {
-	// TODO
+	if (opened_header != -1 && opened_header != Defect::NULL_FACES)
+		ImGui::SetNextItemOpen(false);
+	if (ImGui::CollapsingHeader("Null Faces"))
+	{
+		opened_header = Defect::NULL_FACES;
+		auto& null_faces = defect_list.get<Defect::NULL_FACES>();
+
+		render_defect_base_buttons(Defect::NULL_FACES, &GeoRepair::null_faces_detect_success);
+	}
+	else if (opened_header == Defect::NULL_FACES)
+		opened_header = -1;
 }
 
 void GeoRepair::render_unbound_vertices_gui()
 {
-	// TODO
+	if (opened_header != -1 && opened_header != Defect::UNBOUND_VERTICES)
+		ImGui::SetNextItemOpen(false);
+	if (ImGui::CollapsingHeader("Unbound Vertices"))
+	{
+		opened_header = Defect::UNBOUND_VERTICES;
+		auto& unbound_vertices = defect_list.get<Defect::UNBOUND_VERTICES>();
+		bool reset = false;
+		
+		float x[2] = { (float)unbound_vertices.min_x, (float)unbound_vertices.max_x };
+		if (ImGui::InputFloat2("Min/Max X", x) && x[0] <= x[1])
+		{
+			unbound_vertices.min_x = x[0];
+			unbound_vertices.max_x = x[1];
+			reset = true;
+		}
+		float y[2] = { (float)unbound_vertices.min_y, (float)unbound_vertices.max_y };
+		if (ImGui::InputFloat2("Min/Max Y", y) && y[0] <= y[1])
+		{
+			unbound_vertices.min_y = y[0];
+			unbound_vertices.max_y = y[1];
+			reset = true;
+		}
+		float z[2] = { (float)unbound_vertices.min_z, (float)unbound_vertices.max_z };
+		if (ImGui::InputFloat2("Min/Max Z", z) && z[0] <= z[1])
+		{
+			unbound_vertices.min_z = z[0];
+			unbound_vertices.max_z = z[1];
+			reset = true;
+		}
+
+		if (reset)
+			unbound_vertices.reset();
+
+		render_defect_base_buttons(Defect::UNBOUND_VERTICES, &GeoRepair::unbound_vertices_detect_success);
+	}
+	else if (opened_header == Defect::UNBOUND_VERTICES)
+		opened_header = -1;
 }
 
 void GeoRepair::render_unpatched_holes_gui()
 {
-	// TODO
+	if (opened_header != -1 && opened_header != Defect::UNPATCHED_HOLES)
+		ImGui::SetNextItemOpen(false);
+	if (ImGui::CollapsingHeader("Unpatched Holes"))
+	{
+		opened_header = Defect::UNPATCHED_HOLES;
+		auto& unpatched_holes = defect_list.get<Defect::UNPATCHED_HOLES>();
+
+		static const char* patch_methods[] = { "Fan", "Strip", "Clip", "Pie" };
+		ImGui::SetNextItemWidth(200);
+		if (ImGui::BeginCombo("Patch Method", patch_methods[(int)unpatched_holes.patch_method]))
+		{
+			for (int i = 0; i < 4; ++i)
+			{
+				if (ImGui::Selectable(patch_methods[i], i == (int)unpatched_holes.patch_method))
+					unpatched_holes.patch_method = decltype(unpatched_holes.patch_method)(i);
+				if (i == (int)unpatched_holes.patch_method)
+					ImGui::SetItemDefaultFocus();
+			}
+			ImGui::EndCombo();
+		}
+
+		render_defect_base_buttons(Defect::UNPATCHED_HOLES, &GeoRepair::unpatched_holes_detect_success);
+	}
+	else if (opened_header == Defect::UNPATCHED_HOLES)
+		opened_header = -1;
 }
 
 void GeoRepair::render_defect_base_buttons(Defect defect, void(GeoRepair::*detect_success)())
