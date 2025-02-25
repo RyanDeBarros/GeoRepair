@@ -10,6 +10,10 @@ bool Mesh::load(const char* filename)
 	// TODO eventually, add support for texture coordinates, etc., for specific file extensions
 	if (!igl::read_triangle_mesh(filename, data->V, data->F))
 		return false;
+	data->VC.resizeLike(data->V);
+	for (Eigen::Index i = 0; i < data->VC.rows(); ++i)
+		data->VC.row(i) = colors.neutral;
+
 	// remove invalid faces
 	Eigen::Index max_vertex = data->V.rows() - 1;
 	remove_rows(data->F, [max_vertex](Eigen::Index i, const Eigen::RowVector3i& face) {
@@ -27,8 +31,7 @@ bool Mesh::save(const char* filename)
 void Mesh::push()
 {
 	auto old_data = std::make_shared<MeshPrimaryData>();
-	old_data->V = data->V;
-	old_data->F = data->F;
+	*old_data = *data;
 	history.push(old_data);
 	aux.reset();
 }

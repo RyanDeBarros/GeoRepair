@@ -67,6 +67,13 @@ private:
 	void null_faces_detect_success();
 	void unbound_vertices_detect_success();
 	void unpatched_holes_detect_success();
+
+	void reset_vertex_colors();
+
+	struct
+	{
+		ImVec4 detected = ImVec4(0.3f, 0.65f, 0.35f, 1.0f);
+	} style_colors;
 };
 
 int main()
@@ -195,9 +202,7 @@ void GeoRepair::refresh_mesh()
 	auto& data = viewer.data();
 	data.clear();
 	data.set_mesh(mesh.get_vertices(), mesh.get_faces());
-	Eigen::MatrixXd vertex_colors(1, 3);
-	(vertex_colors << 0.4, 0.4, 0.4).finished();
-	data.set_points(mesh.get_vertices(), vertex_colors);
+	data.set_points(mesh.get_vertices(), mesh.get_vertex_colors());
 	data.set_face_based(true);
 	defect_list.reset_all();
 }
@@ -216,30 +221,53 @@ void GeoRepair::redo()
 
 void GeoRepair::render_menu_gui()
 {
-	if (ImGui::Button("Load Mesh"))
-		load_mesh();
-	if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-		ImGui::SetTooltip("Ctrl+O");
-	ImGui::SameLine();
-	if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-		ImGui::SetTooltip("Ctrl+S");
-	if (ImGui::Button("Save Mesh"))
-		save_mesh();
-	if (ImGui::Button("Undo"))
-		undo();
-	if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-		ImGui::SetTooltip("Ctrl+Z");
-	ImGui::SameLine();
-	if (ImGui::Button("Redo"))
-		redo();
-	if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-		ImGui::SetTooltip("Ctrl+Shift+Z");
+	if (ImGui::BeginMainMenuBar())
+	{
+		if (ImGui::BeginMenu("File"))
+		{
+			if (ImGui::MenuItem("Load mesh", "Ctrl+O"))
+				load_mesh();
+			if (ImGui::MenuItem("Save mesh", "Ctrl+S"))
+				save_mesh();
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("Edit"))
+		{
+			if (ImGui::MenuItem("Undo", "Ctrl+Z"))
+				undo();
+			if (ImGui::MenuItem("Redo", "Ctrl+Shft+Z"))
+				redo();
+			ImGui::Separator();
+			if (ImGui::MenuItem("Clear visualization"))
+			{
+				reset_vertex_colors();
+				// TODO reset face/edge colors
+			}
+			if (ImGui::MenuItem("Restore visualization"))
+			{
+				viewer.data().set_points(mesh.get_vertices(), mesh.get_vertex_colors());
+				// TODO set face/edge colors
+			}
+			ImGui::EndMenu();
+		}
+		ImGui::EndMainMenuBar();
+	}
 }
+
+#define render_defect_gui_header(defect)\
+	bool detected = defect_list[defect].in_detected_state();\
+	if (detected) ImGui::PushStyleColor(ImGuiCol_Header, style_colors.detected);\
+	if (opened_header != -1 && opened_header != defect)\
+		ImGui::SetNextItemOpen(false);
+#define render_defect_gui_footer(defect)\
+	else if (opened_header == defect)\
+		opened_header = -1;\
+	if (detected)\
+		ImGui::PopStyleColor();
 
 void GeoRepair::render_degenerate_faces_gui()
 {
-	if (opened_header != -1 && opened_header != Defect::DEGENERATE_FACES)
-		ImGui::SetNextItemOpen(false);
+	render_defect_gui_header(Defect::DEGENERATE_FACES);
 	if (ImGui::CollapsingHeader("Degenerate Faces"))
 	{
 		opened_header = Defect::DEGENERATE_FACES;
@@ -265,14 +293,12 @@ void GeoRepair::render_degenerate_faces_gui()
 
 		render_defect_base_buttons(Defect::DEGENERATE_FACES, &GeoRepair::degenerate_faces_detect_success);
 	}
-	else if (opened_header == Defect::DEGENERATE_FACES)
-		opened_header = -1;
+	render_defect_gui_footer(Defect::DEGENERATE_FACES);
 }
 
 void GeoRepair::render_degenerate_vertex_patch_gui()
 {
-	if (opened_header != -1 && opened_header != Defect::DEGENERATE_VERTEX_PATCH)
-		ImGui::SetNextItemOpen(false);
+	render_defect_gui_header(Defect::DEGENERATE_VERTEX_PATCH);
 	if (ImGui::CollapsingHeader("Degenerate Vertex Patches"))
 	{
 		opened_header = Defect::DEGENERATE_VERTEX_PATCH;
@@ -295,14 +321,12 @@ void GeoRepair::render_degenerate_vertex_patch_gui()
 
 		render_defect_base_buttons(Defect::DEGENERATE_VERTEX_PATCH, &GeoRepair::degenerate_vertex_patch_detect_success);
 	}
-	else if (opened_header == Defect::DEGENERATE_VERTEX_PATCH)
-		opened_header = -1;
+	render_defect_gui_footer(Defect::DEGENERATE_VERTEX_PATCH);
 }
 
 void GeoRepair::render_duplicate_faces_gui()
 {
-	if (opened_header != -1 && opened_header != Defect::DUPLICATE_FACES)
-		ImGui::SetNextItemOpen(false);
+	render_defect_gui_header(Defect::DUPLICATE_FACES);
 	if (ImGui::CollapsingHeader("Duplicate Faces"))
 	{
 		opened_header = Defect::DUPLICATE_FACES;
@@ -317,14 +341,12 @@ void GeoRepair::render_duplicate_faces_gui()
 
 		render_defect_base_buttons(Defect::DUPLICATE_FACES, &GeoRepair::duplicate_faces_detect_success);
 	}
-	else if (opened_header == Defect::DUPLICATE_FACES)
-		opened_header = -1;
+	render_defect_gui_footer(Defect::DUPLICATE_FACES);
 }
 
 void GeoRepair::render_general_duplicate_vertices_gui()
 {
-	if (opened_header != -1 && opened_header != Defect::GENERAL_DUPLICATE_VERTICES)
-		ImGui::SetNextItemOpen(false);
+	render_defect_gui_header(Defect::GENERAL_DUPLICATE_VERTICES);
 	if (ImGui::CollapsingHeader("Duplicate Vertices"))
 	{
 		opened_header = Defect::GENERAL_DUPLICATE_VERTICES;
@@ -347,14 +369,12 @@ void GeoRepair::render_general_duplicate_vertices_gui()
 
 		render_defect_base_buttons(Defect::GENERAL_DUPLICATE_VERTICES, &GeoRepair::general_duplicate_vertices_detect_success);
 	}
-	else if (opened_header == Defect::GENERAL_DUPLICATE_VERTICES)
-		opened_header = -1;
+	render_defect_gui_footer(Defect::GENERAL_DUPLICATE_VERTICES);
 }
 
 void GeoRepair::render_inverted_normals_gui()
 {
-	if (opened_header != -1 && opened_header != Defect::INVERTED_NORMALS)
-		ImGui::SetNextItemOpen(false);
+	render_defect_gui_header(Defect::INVERTED_NORMALS);
 	if (ImGui::CollapsingHeader("Inverted Normals"))
 	{
 		opened_header = Defect::INVERTED_NORMALS;
@@ -368,14 +388,12 @@ void GeoRepair::render_inverted_normals_gui()
 
 		render_defect_base_buttons(Defect::INVERTED_NORMALS, &GeoRepair::inverted_normals_detect_success);
 	}
-	else if (opened_header == Defect::INVERTED_NORMALS)
-		opened_header = -1;
+	render_defect_gui_footer(Defect::INVERTED_NORMALS);
 }
 
 void GeoRepair::render_noise_smoothing_gui()
 {
-	if (opened_header != -1 && opened_header != Defect::NOISE_SMOOTHING)
-		ImGui::SetNextItemOpen(false);
+	render_defect_gui_header(Defect::NOISE_SMOOTHING);
 	if (ImGui::CollapsingHeader("Noise Smoothing"))
 	{
 		opened_header = Defect::NOISE_SMOOTHING;
@@ -422,14 +440,12 @@ void GeoRepair::render_noise_smoothing_gui()
 
 		render_defect_base_buttons(Defect::NOISE_SMOOTHING, &GeoRepair::noise_smoothing_detect_success);
 	}
-	else if (opened_header == Defect::NOISE_SMOOTHING)
-		opened_header = -1;
+	render_defect_gui_footer(Defect::NOISE_SMOOTHING);
 }
 
 void GeoRepair::render_non_manifold_edges_gui()
 {
-	if (opened_header != -1 && opened_header != Defect::NON_MANIFOLD_EDGES)
-		ImGui::SetNextItemOpen(false);
+	render_defect_gui_header(Defect::NON_MANIFOLD_EDGES);
 	if (ImGui::CollapsingHeader("Non-Manifold Edges"))
 	{
 		if (ImGui::IsItemHovered())
@@ -450,17 +466,18 @@ void GeoRepair::render_non_manifold_edges_gui()
 		ImGui::EndDisabled();
 		ImGui::BeginDisabled(!non_manifold_edges.in_detected_state());
 		if (ImGui::Button("Reset"))
+		{
 			non_manifold_edges.reset();
+			// TODO reset edge colors
+		}
 		ImGui::EndDisabled();
 	}
-	else if (opened_header == Defect::NON_MANIFOLD_EDGES)
-		opened_header = -1;
+	render_defect_gui_footer(Defect::NON_MANIFOLD_EDGES);
 }
 
 void GeoRepair::render_null_faces_gui()
 {
-	if (opened_header != -1 && opened_header != Defect::NULL_FACES)
-		ImGui::SetNextItemOpen(false);
+	render_defect_gui_header(Defect::NULL_FACES);
 	if (ImGui::CollapsingHeader("Null Faces"))
 	{
 		opened_header = Defect::NULL_FACES;
@@ -468,14 +485,12 @@ void GeoRepair::render_null_faces_gui()
 
 		render_defect_base_buttons(Defect::NULL_FACES, &GeoRepair::null_faces_detect_success);
 	}
-	else if (opened_header == Defect::NULL_FACES)
-		opened_header = -1;
+	render_defect_gui_footer(Defect::NULL_FACES);
 }
 
 void GeoRepair::render_unbound_vertices_gui()
 {
-	if (opened_header != -1 && opened_header != Defect::UNBOUND_VERTICES)
-		ImGui::SetNextItemOpen(false);
+	render_defect_gui_header(Defect::UNBOUND_VERTICES);
 	if (ImGui::CollapsingHeader("Unbound Vertices"))
 	{
 		opened_header = Defect::UNBOUND_VERTICES;
@@ -509,14 +524,12 @@ void GeoRepair::render_unbound_vertices_gui()
 
 		render_defect_base_buttons(Defect::UNBOUND_VERTICES, &GeoRepair::unbound_vertices_detect_success);
 	}
-	else if (opened_header == Defect::UNBOUND_VERTICES)
-		opened_header = -1;
+	render_defect_gui_footer(Defect::UNBOUND_VERTICES);
 }
 
 void GeoRepair::render_unpatched_holes_gui()
 {
-	if (opened_header != -1 && opened_header != Defect::UNPATCHED_HOLES)
-		ImGui::SetNextItemOpen(false);
+	render_defect_gui_header(Defect::UNPATCHED_HOLES);
 	if (ImGui::CollapsingHeader("Unpatched Holes"))
 	{
 		opened_header = Defect::UNPATCHED_HOLES;
@@ -538,8 +551,7 @@ void GeoRepair::render_unpatched_holes_gui()
 
 		render_defect_base_buttons(Defect::UNPATCHED_HOLES, &GeoRepair::unpatched_holes_detect_success);
 	}
-	else if (opened_header == Defect::UNPATCHED_HOLES)
-		opened_header = -1;
+	render_defect_gui_footer(Defect::UNPATCHED_HOLES);
 }
 
 void GeoRepair::render_defect_base_buttons(Defect defect, void(GeoRepair::*detect_success)())
@@ -563,7 +575,10 @@ void GeoRepair::render_defect_base_buttons(Defect defect, void(GeoRepair::*detec
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Reset"))
+	{
 		defect_list[defect].reset();
+		reset_vertex_colors();
+	}
 	ImGui::EndDisabled();
 }
 
@@ -626,10 +641,32 @@ void GeoRepair::null_faces_detect_success()
 
 void GeoRepair::unbound_vertices_detect_success()
 {
-	// TODO
+	auto& vertex_colors = mesh.get_vertex_colors();
+	const auto& unbound_vertices = defect_list.get<Defect::UNBOUND_VERTICES>().get_unbound_vertices();
+	Eigen::Index uvx = 0;
+	for (Eigen::Index i = 0; i < vertex_colors.rows(); ++i)
+	{
+		if (uvx < unbound_vertices.size() && unbound_vertices[uvx] == i)
+		{
+			vertex_colors.row(i) = mesh.colors.defective;
+			++uvx;
+		}
+		else
+			vertex_colors.row(i) = mesh.colors.neutral;
+	}
+	viewer.data().set_points(mesh.get_vertices(), vertex_colors);
 }
 
 void GeoRepair::unpatched_holes_detect_success()
 {
 	// TODO
+}
+
+void GeoRepair::reset_vertex_colors()
+{
+	Eigen::MatrixXd vertex_colors = mesh.get_vertex_colors();
+	vertex_colors.resizeLike(mesh.get_vertices());
+	for (Eigen::Index i = 0; i < vertex_colors.rows(); ++i)
+		vertex_colors.row(i) = mesh.colors.neutral;
+	viewer.data().set_points(mesh.get_vertices(), vertex_colors);
 }

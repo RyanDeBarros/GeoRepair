@@ -11,6 +11,12 @@ class Mesh
 public:
 	Mesh() : data(std::make_shared<MeshPrimaryData>()) {}
 
+	struct
+	{
+		Eigen::RowVector3d neutral = Eigen::RowVector3d(0.5, 0.5, 0.5);
+		Eigen::RowVector3d defective = Eigen::RowVector3d(0.9, 0.3, 0.3);
+	} colors;
+
 	bool load(const char* filename);
 	bool save(const char* filename);
 
@@ -22,6 +28,8 @@ public:
 	decltype(data->V)& get_vertices() { return data->V; }
 	const decltype(data->F)& get_faces() const { return data->F; }
 	decltype(data->F)& get_faces() { return data->F; }
+	const decltype(data->VC)& get_vertex_colors() const { return data->VC; }
+	decltype(data->VC)& get_vertex_colors() { return data->VC; }
 
 	const std::vector<Eigen::Index>& get_adj_vertices(Eigen::Index vertex_index) const { return aux.get_vadj(*data)[vertex_index]; }
 	const std::vector<Eigen::Index>& get_adj_face_rows(Eigen::Index vertex_index) const { return aux.get_vfadj_row(*data)[vertex_index]; }

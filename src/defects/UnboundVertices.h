@@ -20,5 +20,8 @@ namespace defects
 
 	private:
 		std::vector<Eigen::Index> unbound_vertices;
+
+	public:
+		const decltype(unbound_vertices)& get_unbound_vertices() const { return unbound_vertices; }
 	};
 }

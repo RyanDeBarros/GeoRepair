@@ -8,6 +8,8 @@ struct MeshPrimaryData
 {
 	Eigen::MatrixXd V;
 	Eigen::MatrixXi F;
+	Eigen::MatrixXd VC;
+	// TODO face/edge colors
 };
 
 // used for lazy loading auxiliary data structures
