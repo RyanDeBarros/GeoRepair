@@ -12,10 +12,11 @@ void defects::DegenerateFaces::_repair(Mesh& mesh)
 {
 	if (degenerate_vertex_patch.in_detected_state())
 	{
-		degenerate_vertex_patch.repair(mesh);
+		degenerate_vertex_patch._repair(mesh);
 		duplicate_faces.detect(mesh); // re-detect, since degenerate_vertex_patch may have introduced new duplicate faces. it's assumed that ignore_normals did not change
 	}
-	duplicate_faces.repair(mesh);
+	if (duplicate_faces.in_detected_state())
+		duplicate_faces._repair(mesh);
 }
 
 void defects::DegenerateFaces::reset()

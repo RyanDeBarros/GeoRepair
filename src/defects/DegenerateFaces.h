@@ -8,7 +8,6 @@ namespace defects
 	// combines DegenerateVertexPatch and DuplicateFaces
 	struct DegenerateFaces : public DefectBase
 	{
-	protected:
 		virtual void _detect(const Mesh& mesh) override;
 		virtual void _repair(Mesh& mesh) override;
 
@@ -23,5 +22,8 @@ namespace defects
 	public:
 		double tolerance = 0.0; // must be positive
 		bool ignore_normals = false;
+
+		const DegenerateVertexPatch& get_degenerate_vertex_patch() const { return degenerate_vertex_patch; }
+		const DuplicateFaces& get_duplicate_faces() const { return duplicate_faces; }
 	};
 }
