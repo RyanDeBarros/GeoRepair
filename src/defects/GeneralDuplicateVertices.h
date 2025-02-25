@@ -22,8 +22,11 @@ namespace defects
 
 	private:
 		std::vector<Proximity> proximities;
+		std::unordered_map<Eigen::Index, double> squared_distances;
 
 	public:
 		double tolerance = 0.0; // must be positive
+
+		const decltype(squared_distances)& get_squared_distances() const { return squared_distances; }
 	};
 }

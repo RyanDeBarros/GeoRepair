@@ -74,6 +74,13 @@ private:
 	{
 		ImVec4 detected = ImVec4(0.3f, 0.65f, 0.35f, 1.0f);
 	} style_colors;
+
+	struct
+	{
+		Eigen::RowVector3d neutral = Eigen::RowVector3d(0.5, 0.5, 0.5);
+		Eigen::RowVector3d defective = Eigen::RowVector3d(0.9, 0.3, 0.3);
+		Eigen::RowVector3d defective_low = Eigen::RowVector3d(0.7, 0.3, 0.6);
+	} mesh_colors;
 };
 
 int main()
@@ -152,7 +159,7 @@ void GeoRepair::init()
 			glfwSetDropCallback(viewer.window, &path_drop_callback);
 			return false;
 		};
-	viewer.data().point_size = 5.0f;
+	viewer.data().point_size = 8.0f;
 }
 
 void GeoRepair::load_mesh(const char* filename)
@@ -456,6 +463,8 @@ void GeoRepair::render_non_manifold_edges_gui()
 		ImGui::BeginDisabled(non_manifold_edges.in_detected_state());
 		if (ImGui::Button("Detect"))
 		{
+			reset_vertex_colors();
+			// TODO reset face/edge colors
 			non_manifold_edges.detect(mesh);
 			if (non_manifold_edges.in_detected_state())
 				non_manifold_edges_detect_success();
@@ -559,6 +568,8 @@ void GeoRepair::render_defect_base_buttons(Defect defect, void(GeoRepair::*detec
 	ImGui::BeginDisabled(defect_list[defect].in_detected_state()); // TODO later, in_detected_state() will need to check for the particular selection of the mesh
 	if (ImGui::Button("Detect"))
 	{
+		reset_vertex_colors();
+		// TODO reset face/edge colors
 		defect_list[defect].detect(mesh);
 		if (defect_list[defect].in_detected_state())
 			(this->*detect_success)();
@@ -606,7 +617,17 @@ void GeoRepair::degenerate_faces_detect_success()
 
 void GeoRepair::degenerate_vertex_patch_detect_success()
 {
-	// TODO
+	auto& vertex_colors = mesh.get_vertex_colors();
+	vertex_colors.resizeLike(mesh.get_vertices());
+	auto& vertex_clusters = defect_list.get<Defect::DEGENERATE_VERTEX_PATCH>().get_vertex_clusters();
+	for (Eigen::Index i = 0; i < vertex_colors.rows(); ++i)
+	{
+		if (vertex_clusters.exists(i))
+			vertex_colors.row(i) = mesh_colors.defective;
+		else
+			vertex_colors.row(i) = mesh_colors.neutral;
+	}
+	viewer.data().set_points(mesh.get_vertices(), vertex_colors);
 }
 
 void GeoRepair::duplicate_faces_detect_success()
@@ -616,7 +637,21 @@ void GeoRepair::duplicate_faces_detect_success()
 
 void GeoRepair::general_duplicate_vertices_detect_success()
 {
-	// TODO
+	auto& vertex_colors = mesh.get_vertex_colors();
+	vertex_colors.resizeLike(mesh.get_vertices());
+	const auto& defect = defect_list.get<Defect::GENERAL_DUPLICATE_VERTICES>();
+	const auto& squared_distances = defect.get_squared_distances();
+	double squared_tolerance = defect.tolerance * defect.tolerance;
+	
+	for (Eigen::Index i = 0; i < vertex_colors.rows(); ++i)
+	{
+		auto it = squared_distances.find(i);
+		if (it != squared_distances.end())
+			vertex_colors.row(i) = mesh_colors.defective + it->second / squared_tolerance * (mesh_colors.defective_low - mesh_colors.defective);
+		else
+			vertex_colors.row(i) = mesh_colors.neutral;
+	}
+	viewer.data().set_points(mesh.get_vertices(), vertex_colors);
 }
 
 void GeoRepair::inverted_normals_detect_success()
@@ -642,17 +677,18 @@ void GeoRepair::null_faces_detect_success()
 void GeoRepair::unbound_vertices_detect_success()
 {
 	auto& vertex_colors = mesh.get_vertex_colors();
+	vertex_colors.resizeLike(mesh.get_vertices());
 	const auto& unbound_vertices = defect_list.get<Defect::UNBOUND_VERTICES>().get_unbound_vertices();
 	Eigen::Index uvx = 0;
 	for (Eigen::Index i = 0; i < vertex_colors.rows(); ++i)
 	{
 		if (uvx < unbound_vertices.size() && unbound_vertices[uvx] == i)
 		{
-			vertex_colors.row(i) = mesh.colors.defective;
+			vertex_colors.row(i) = mesh_colors.defective;
 			++uvx;
 		}
 		else
-			vertex_colors.row(i) = mesh.colors.neutral;
+			vertex_colors.row(i) = mesh_colors.neutral;
 	}
 	viewer.data().set_points(mesh.get_vertices(), vertex_colors);
 }
@@ -664,9 +700,5 @@ void GeoRepair::unpatched_holes_detect_success()
 
 void GeoRepair::reset_vertex_colors()
 {
-	Eigen::MatrixXd vertex_colors = mesh.get_vertex_colors();
-	vertex_colors.resizeLike(mesh.get_vertices());
-	for (Eigen::Index i = 0; i < vertex_colors.rows(); ++i)
-		vertex_colors.row(i) = mesh.colors.neutral;
-	viewer.data().set_points(mesh.get_vertices(), vertex_colors);
+	viewer.data().set_points(mesh.get_vertices(), mesh_colors.neutral);
 }

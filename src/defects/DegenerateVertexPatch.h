@@ -20,5 +20,7 @@ namespace defects
 
 	public:
 		double tolerance = 0.0; // must be positive
+
+		const EquivalenceClasses& get_vertex_clusters() const { return vertex_clusters; }
 	};
 }

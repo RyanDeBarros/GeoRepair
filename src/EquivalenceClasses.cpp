@@ -60,6 +60,11 @@ void EquivalenceClasses::add(Eigen::Index x, Eigen::Index y)
 	unite(x, y);
 }
 
+bool EquivalenceClasses::exists(Eigen::Index x) const
+{
+	return parent.count(x);
+}
+
 std::unordered_map<Eigen::Index, std::unordered_set<Eigen::Index>> EquivalenceClasses::gen_classes()
 {
 	decltype(gen_classes()) classes;

@@ -29,9 +29,20 @@ void defects::GeneralDuplicateVertices::_detect(const Mesh& mesh)
 				}
 			}
 		}
-
 		voxel_grid[voxel].push_back(i);
 	}
+
+	std::unordered_map<Eigen::Index, int> number_of_neighbours;
+	std::unordered_map<Eigen::Index, double> squared_distance_sum;
+	for (const Proximity& p : proximities)
+	{
+		++number_of_neighbours[p.i];
+		++number_of_neighbours[p.j];
+		squared_distance_sum[p.i] += p.dist_squared;
+		squared_distance_sum[p.j] += p.dist_squared;
+	}
+	for (const auto& [v, num_neighbours] : number_of_neighbours)
+		squared_distances[v] = squared_distance_sum[v] / num_neighbours;
 }
 
 void defects::GeneralDuplicateVertices::_repair(Mesh& mesh)
@@ -46,6 +57,7 @@ void defects::GeneralDuplicateVertices::_repair(Mesh& mesh)
 void defects::GeneralDuplicateVertices::reset()
 {
 	proximities.clear();
+	squared_distances.clear();
 }
 
 bool defects::GeneralDuplicateVertices::in_detected_state() const

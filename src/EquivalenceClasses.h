@@ -19,5 +19,6 @@ public:
 	bool empty() const;
 	void add(const std::vector<Eigen::Index>& group);
 	void add(Eigen::Index x, Eigen::Index y);
+	bool exists(Eigen::Index x) const;
 	std::unordered_map<Eigen::Index, std::unordered_set<Eigen::Index>> gen_classes();
 };

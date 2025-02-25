@@ -11,12 +11,6 @@ class Mesh
 public:
 	Mesh() : data(std::make_shared<MeshPrimaryData>()) {}
 
-	struct
-	{
-		Eigen::RowVector3d neutral = Eigen::RowVector3d(0.5, 0.5, 0.5);
-		Eigen::RowVector3d defective = Eigen::RowVector3d(0.9, 0.3, 0.3);
-	} colors;
-
 	bool load(const char* filename);
 	bool save(const char* filename);
 

@@ -10,9 +10,8 @@ bool Mesh::load(const char* filename)
 	// TODO eventually, add support for texture coordinates, etc., for specific file extensions
 	if (!igl::read_triangle_mesh(filename, data->V, data->F))
 		return false;
-	data->VC.resizeLike(data->V);
-	for (Eigen::Index i = 0; i < data->VC.rows(); ++i)
-		data->VC.row(i) = colors.neutral;
+	data->VC.resize(1, 3);
+	data->VC.row(0) = Eigen::RowVector3d(0.5, 0.5, 0.5);
 
 	// remove invalid faces
 	Eigen::Index max_vertex = data->V.rows() - 1;
