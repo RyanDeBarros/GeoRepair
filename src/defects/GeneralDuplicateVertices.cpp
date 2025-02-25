@@ -4,6 +4,7 @@
 
 void defects::GeneralDuplicateVertices::_detect(const Mesh& mesh)
 {
+	// TODO a bit slow. try to optimize
 	std::unordered_map<Eigen::Vector3i, std::vector<Eigen::Index>, EigenMatrixHash> voxel_grid;
 	const double inv_tolerance = 1.0 / tolerance;
 	const double sqrd_tolerance = tolerance * tolerance;
