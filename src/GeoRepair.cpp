@@ -1,5 +1,4 @@
 #define IGL_VIEWER_VIEWER_QUIET
-// TODO add above macro to laplacian-deformation
 
 #include <igl/opengl/glfw/imgui/ImGuiMenu.h>
 #include <igl/opengl/glfw/imgui/SelectionWidget.h>
@@ -23,6 +22,9 @@ class GeoRepair
 	CallbackWidget callback;
 	Mesh mesh;
 	DefectList defect_list;
+
+	GLFWcursor* wait_cursor;
+	GLFWcursor* arrow_cursor;
 
 public:
 	void run();
@@ -116,9 +118,6 @@ bool CallbackWidget::key_down(int key, int modifiers)
 void GeoRepair::run()
 {
 	init();
-	
-	load_mesh("../assets/noise.obj");
-	
 	viewer.launch(false, "GeoRepair", 1920, 1080);
 }
 
@@ -183,6 +182,15 @@ void GeoRepair::init()
 		{
 			glfwSetWindowUserPointer(viewer.window, this);
 			glfwSetDropCallback(viewer.window, &path_drop_callback);
+			wait_cursor = glfwCreateStandardCursor(GLFW_NOT_ALLOWED_CURSOR);
+			arrow_cursor = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
+
+
+			// TODO remove
+			load_mesh("../assets/noise.obj");
+
+
+
 			return false;
 		};
 	mesh_data().point_size = 8.0f;
@@ -243,7 +251,13 @@ void GeoRepair::refresh_mesh()
 	mesh_data().set_mesh(mesh.get_vertices(), mesh.get_faces());
 	mesh_data().set_points(mesh.get_vertices(), mesh.get_vertex_colors());
 	mesh_data().set_face_based(true);
+	// TODO mesh_data set face colors and edge_data set edge colors
 	defect_list.reset_all();
+	if (viewer.window)
+	{
+		std::string title = "GeoRepair - " + mesh.get_filename() + " - " + std::to_string(mesh.history_index());
+		glfwSetWindowTitle(viewer.window, title.c_str());
+	}
 }
 
 void GeoRepair::undo()
@@ -445,12 +459,13 @@ void GeoRepair::render_noise_smoothing_gui()
 		bool reset = false;
 		int prev_combo = -1;
 
-		static const char* detection_methods[] = { "Laplacian Residual", "Mean Curvature", "Feature Sensitive", "Eigen Values" };
+		static const int num_detection_methods = 3;
+		static const char* detection_methods[num_detection_methods] = { "Laplacian Residual", "Mean Curvature", "Feature Sensitive" };
 		prev_combo = (int)noise_smoothing.detection_method;
 		ImGui::SetNextItemWidth(200);
 		if (ImGui::BeginCombo("Detection Method", detection_methods[(int)noise_smoothing.detection_method]))
 		{
-			for (int i = 0; i < 4; ++i)
+			for (int i = 0; i < num_detection_methods; ++i)
 			{
 				if (ImGui::Selectable(detection_methods[i], i == (int)noise_smoothing.detection_method))
 					noise_smoothing.detection_method = decltype(noise_smoothing.detection_method)(i);
@@ -462,12 +477,44 @@ void GeoRepair::render_noise_smoothing_gui()
 		if ((int)noise_smoothing.detection_method != prev_combo)
 			reset = true;
 
-		static const char* smoothing_methods[] = { "Laplacian", "Taubin", "Desbrun", "Bilateral" };
+		if (noise_smoothing.detection_method == decltype(noise_smoothing.detection_method)::LAPLACIAN_RESIDUAL
+			|| noise_smoothing.detection_method == decltype(noise_smoothing.detection_method)::FEATURE_SENSITIVE)
+		{
+			double tolerance = noise_smoothing.laplacian_tolerance;
+			ImGui::SetNextItemWidth(200);
+			if (ImGui::InputDouble("Laplacian Tolerance", &tolerance) && tolerance >= 0.0)
+			{
+				noise_smoothing.laplacian_tolerance = tolerance;
+				reset = true;
+			}
+		}
+		if (noise_smoothing.detection_method == decltype(noise_smoothing.detection_method)::MEAN_CURVATURE
+			|| noise_smoothing.detection_method == decltype(noise_smoothing.detection_method)::FEATURE_SENSITIVE)
+		{
+			double tolerance = noise_smoothing.curvature_tolerance;
+			ImGui::SetNextItemWidth(200);
+			if (ImGui::InputDouble("Curvature Tolerance", &tolerance) && tolerance >= 0.0)
+			{
+				noise_smoothing.curvature_tolerance = tolerance;
+				reset = true;
+			}
+		}
+		if (ImGui::Checkbox("Smooth All", &noise_smoothing.smooth_all))
+			reset = true;
+		if (ImGui::Checkbox("Ignore Boundaries", &noise_smoothing.ignore_boundaries))
+			reset = true;
+		if (ImGui::Checkbox("Global Noise", &noise_smoothing.global_noise))
+			reset = true;
+
+		ImGui::Separator();
+
+		static const int num_smoothing_methods = 4;
+		static const char* smoothing_methods[num_smoothing_methods] = { "Laplacian", "Taubin", "Desbrun", "Bilateral" };
 		prev_combo = (int)noise_smoothing.smoothing_method;
 		ImGui::SetNextItemWidth(200);
 		if (ImGui::BeginCombo("Smoothing Method", smoothing_methods[(int)noise_smoothing.smoothing_method]))
 		{
-			for (int i = 0; i < 4; ++i)
+			for (int i = 0; i < num_smoothing_methods; ++i)
 			{
 				if (ImGui::Selectable(smoothing_methods[i], i == (int)noise_smoothing.smoothing_method))
 					noise_smoothing.smoothing_method = decltype(noise_smoothing.smoothing_method)(i);
@@ -477,7 +524,57 @@ void GeoRepair::render_noise_smoothing_gui()
 			ImGui::EndCombo();
 		}
 
-		// TODO noise smoothing parameters
+		switch (noise_smoothing.smoothing_method)
+		{
+		case decltype(noise_smoothing.smoothing_method)::LAPLACIAN:
+		{
+			int iterations = noise_smoothing.laplacian_iterations;
+			ImGui::SetNextItemWidth(200);
+			if (ImGui::InputInt("Iterations", &iterations) && iterations >= 1)
+				noise_smoothing.laplacian_iterations = iterations;
+			ImGui::SetNextItemWidth(200);
+			ImGui::SliderFloat("Smoothing Factor", &noise_smoothing.laplacian_smoothing_factor, 0.0f, 1.0f);
+			break;
+		}
+		case decltype(noise_smoothing.smoothing_method)::TAUBIN:
+		{
+			int iterations = noise_smoothing.taubin_iterations;
+			ImGui::SetNextItemWidth(200);
+			if (ImGui::InputInt("Iterations", &iterations) && iterations >= 1)
+				noise_smoothing.taubin_iterations = iterations;
+			ImGui::SetNextItemWidth(200);
+			ImGui::SliderFloat("Shrinking Factor", &noise_smoothing.taubin_shrinking_factor, 0.0f, 1.0f);
+			ImGui::SetNextItemWidth(200);
+			ImGui::SliderFloat("Expanding Factor", &noise_smoothing.taubin_expanding_factor, -1.0f, 0.0f);
+			break;
+		}
+		case decltype(noise_smoothing.smoothing_method)::DESBRUN:
+		{
+			int iterations = noise_smoothing.desbrun_iterations;
+			ImGui::SetNextItemWidth(200);
+			if (ImGui::InputInt("Iterations", &iterations) && iterations >= 1)
+			{
+				noise_smoothing.desbrun_iterations = iterations;
+			}
+			ImGui::SetNextItemWidth(200);
+			ImGui::SliderFloat("Smoothing Factor", &noise_smoothing.desbrun_smoothing_factor, 0.0f, 1.0f);
+			break;
+		}
+		case decltype(noise_smoothing.smoothing_method)::BILATERAL:
+		{
+			float factor = noise_smoothing.bilateral_tangential_factor;
+			ImGui::SetNextItemWidth(200);
+			if (ImGui::InputFloat("Tangential Factor", &factor) && factor > 0.0f)
+				noise_smoothing.bilateral_tangential_factor = factor;
+			factor = noise_smoothing.bilateral_normal_factor;
+			ImGui::SetNextItemWidth(200);
+			if (ImGui::InputFloat("Normal Factor", &factor) && factor > 0.0f)
+				noise_smoothing.bilateral_normal_factor = factor;
+			ImGui::SetNextItemWidth(200);
+			ImGui::SliderFloat("Smoothing Factor", &noise_smoothing.bilateral_smoothing_factor, 0.0f, 1.0f);
+			break;
+		}
+		}
 
 		if (reset)
 			noise_smoothing.reset();
@@ -501,7 +598,9 @@ void GeoRepair::render_non_manifold_edges_gui()
 		if (ImGui::Button("Detect"))
 		{
 			reset_colors();
+			glfwSetCursor(viewer.window, wait_cursor);
 			non_manifold_edges.detect(mesh);
+			glfwSetCursor(viewer.window, arrow_cursor);
 			if (non_manifold_edges.in_detected_state())
 				non_manifold_edges_detect_success();
 			else
@@ -512,7 +611,9 @@ void GeoRepair::render_non_manifold_edges_gui()
 		ImGui::BeginDisabled(!non_manifold_edges.in_detected_state());
 		if (ImGui::Button("Reset"))
 		{
+			glfwSetCursor(viewer.window, wait_cursor);
 			non_manifold_edges.reset();
+			glfwSetCursor(viewer.window, arrow_cursor);
 			reset_colors();
 		}
 		ImGui::EndDisabled();
@@ -605,7 +706,9 @@ void GeoRepair::render_defect_base_buttons(Defect defect, void(GeoRepair::*detec
 	if (ImGui::Button("Detect"))
 	{
 		reset_colors();
+		glfwSetCursor(viewer.window, wait_cursor);
 		defect_list[defect].detect(mesh);
+		glfwSetCursor(viewer.window, arrow_cursor);
 		if (defect_list[defect].in_detected_state())
 			(this->*detect_success)();
 		else
@@ -616,13 +719,17 @@ void GeoRepair::render_defect_base_buttons(Defect defect, void(GeoRepair::*detec
 	ImGui::BeginDisabled(!defect_list[defect].in_detected_state());
 	if (ImGui::Button("Repair"))
 	{
+		glfwSetCursor(viewer.window, wait_cursor);
 		defect_list[defect].repair(mesh);
+		glfwSetCursor(viewer.window, arrow_cursor);
 		refresh_mesh();
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Reset"))
 	{
+		glfwSetCursor(viewer.window, wait_cursor);
 		defect_list[defect].reset();
+		glfwSetCursor(viewer.window, arrow_cursor);
 		reset_colors();
 	}
 	ImGui::EndDisabled();
@@ -757,7 +864,22 @@ void GeoRepair::inverted_normals_detect_success()
 
 void GeoRepair::noise_smoothing_detect_success()
 {
-	// TODO
+	const auto& vertices = mesh.get_vertices();
+	const auto& noisy_vertices = defect_list.get<Defect::NOISE_SMOOTHING>().get_noisy_vertices();
+	auto& vertex_colors = mesh.get_vertex_colors();
+	vertex_colors.resize(vertices.rows(), 3);
+	Eigen::Index nv = 0;
+	for (Eigen::Index i = 0; i < vertex_colors.rows(); ++i)
+	{
+		if (nv < noisy_vertices.size() && noisy_vertices[nv] == i)
+		{
+			vertex_colors.row(i) = colors.vertex.defective;
+			++nv;
+		}
+		else
+			vertex_colors.row(i) = colors.vertex.neutral;
+	}
+	mesh_data().set_points(vertices, vertex_colors);
 }
 
 void GeoRepair::non_manifold_edges_detect_success()

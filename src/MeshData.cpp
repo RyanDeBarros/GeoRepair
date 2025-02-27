@@ -4,6 +4,7 @@
 #include <igl/vertex_triangle_adjacency.h>
 #include <igl/facet_adjacency_matrix.h>
 #include <igl/invert_diag.h>
+#include <igl/boundary_loop.h>
 
 // TODO disclaimer that triangulation will occur, and no information (for now, anyways) about texture coordinates, materials, etc., will be retained.
 
@@ -52,6 +53,32 @@ const decltype(MeshAuxiliaryData::FADJ)& MeshAuxiliaryData::get_fadj(const MeshP
 	return FADJ;
 }
 
+const decltype(MeshAuxiliaryData::boundary_loops)& MeshAuxiliaryData::get_boundary_loops(const MeshPrimaryData& data)
+{
+	if (!auxiliary_flags.test((size_t)AuxiliaryFlags::BOUNDARY_LOOPS))
+	{
+		auxiliary_flags.set((size_t)AuxiliaryFlags::BOUNDARY_LOOPS);
+		igl::boundary_loop(data.F, boundary_loops);
+	}
+	return boundary_loops;
+}
+
+const decltype(MeshAuxiliaryData::boundary_vertices)& MeshAuxiliaryData::get_boundary_vertices(const MeshPrimaryData& data)
+{
+	if (!auxiliary_flags.test((size_t)AuxiliaryFlags::BOUNDARY_VERTICES))
+	{
+		auxiliary_flags.set((size_t)AuxiliaryFlags::BOUNDARY_VERTICES);
+		boundary_vertices.clear();
+		const auto& loops = get_boundary_loops(data);
+		for (const auto& loop : loops)
+		{
+			for (Eigen::Index v : loop)
+				boundary_vertices.insert(v);
+		}
+	}
+	return boundary_vertices;
+}
+
 const decltype(MeshAuxiliaryData::VN)& MeshAuxiliaryData::get_vertex_normals(const MeshPrimaryData& data)
 {
 	if (!auxiliary_flags.test((size_t)AuxiliaryFlags::VN))
@@ -68,7 +95,14 @@ const decltype(MeshAuxiliaryData::laplacian)& MeshAuxiliaryData::get_laplacian(c
 	{
 		auxiliary_flags.set((size_t)AuxiliaryFlags::LAPLACIAN);
 		igl::cotmatrix(data.V, data.F, laplacian);
-		laplacian = (-laplacian).eval();
+		
+		Eigen::VectorXd diag = laplacian.diagonal();
+		for (Eigen::Index i = 0; i < diag.rows(); ++i)
+			if (diag(i) == 0) diag(0) = 1.0; // isolated vertices
+
+		Eigen::SparseMatrix<double> inv_degree(laplacian.rows(), laplacian.cols());
+		inv_degree.setIdentity();
+		laplacian = (inv_degree * diag.cwiseInverse().asDiagonal()) * laplacian;
 	}
 	return laplacian;
 }

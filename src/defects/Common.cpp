@@ -1,7 +1,5 @@
 #include "Common.h"
 
-#include <igl/eigs.h>
-
 #include <unordered_map>
 
 void defects::DefectBase::detect(const Mesh& mesh)
@@ -150,20 +148,6 @@ void standard_deviation(const Eigen::VectorXd& vec, double& mean, double& stddev
 	stddev = 0.0;
 	if (vec.rows() > 0)
 		stddev = std::sqrt((vec.array() - mean).square().sum() / vec.rows());
-}
-
-void eigen_decomposition_largest(const Eigen::SparseMatrix<double>& mat, size_t k, Eigen::MatrixXd& eigen_vectors, Eigen::VectorXd& eigen_values)
-{
-	Eigen::SparseMatrix<double> identity(mat.rows(), mat.cols());
-	identity.setIdentity();
-	assert(igl::eigs(mat, identity, k, igl::EIGS_TYPE_LM, eigen_vectors, eigen_values));
-}
-
-void eigen_decomposition_smallest(const Eigen::SparseMatrix<double>& mat, size_t k, Eigen::MatrixXd& eigen_vectors, Eigen::VectorXd& eigen_values)
-{
-	Eigen::SparseMatrix<double> identity(mat.rows(), mat.cols());
-	identity.setIdentity();
-	assert(igl::eigs(mat, identity, k, igl::EIGS_TYPE_SM, eigen_vectors, eigen_values));
 }
 
 void remove_rows(Eigen::MatrixXi& mat, std::vector<Eigen::Index>& indices, Eigen::Index maximum_block_height, bool indices_sorted)

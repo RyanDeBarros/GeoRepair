@@ -5,8 +5,11 @@
 
 #include "defects/Common.h"
 
+// TODO not only are texture coordinates, materials, etc. lost after loading the mesh, so are faceless edges.
 bool Mesh::load(const char* filename)
 {
+	data->mesh_filename = filename;
+
 	// TODO eventually, add support for texture coordinates, etc., for specific file extensions
 	if (!igl::read_triangle_mesh(filename, data->V, data->F))
 		return false;
@@ -29,17 +32,20 @@ bool Mesh::save(const char* filename)
 
 void Mesh::push()
 {
-	auto old_data = std::make_shared<MeshPrimaryData>();
-	*old_data = *data;
+	auto old_data = data;
 	history.push(old_data);
-	aux.reset();
+	data = std::make_shared<MeshPrimaryData>();
+	*data = *old_data;
+	aux.reset(); // TODO no need to reset if storing aux data in history
 }
 
 bool Mesh::undo()
 {
-	if (auto new_data = history.undo())
+	auto new_data = history.undo();
+	if (new_data && new_data != data)
 	{
-		data = std::move(new_data);
+		*data = *new_data;
+		aux.reset(); // TODO no need to reset if storing aux data in history
 		return true;
 	}
 	return false;
@@ -47,9 +53,11 @@ bool Mesh::undo()
 
 bool Mesh::redo()
 {
-	if (auto new_data = history.redo())
+	auto new_data = history.redo();
+	if (new_data && new_data != data)
 	{
-		data = std::move(new_data);
+		*data = *new_data;
+		aux.reset(); // TODO no need to reset if storing aux data in history
 		return true;
 	}
 	return false;

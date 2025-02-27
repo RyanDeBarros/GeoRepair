@@ -1,10 +1,10 @@
 #pragma once
 
-#include "History.h"
+#include "MeshHistory.h"
 
 class Mesh
 {
-	History history;
+	MeshHistory history;
 	std::shared_ptr<MeshPrimaryData> data;
 	mutable MeshAuxiliaryData aux;
 
@@ -18,6 +18,9 @@ public:
 	bool undo();
 	bool redo();
 
+	int history_index() const { return history.index(); }
+	const std::string& get_filename() const { return data->mesh_filename; }
+
 	const decltype(data->V)& get_vertices() const { return data->V; }
 	decltype(data->V)& get_vertices() { return data->V; }
 	const decltype(data->F)& get_faces() const { return data->F; }
@@ -29,6 +32,8 @@ public:
 	const std::vector<Eigen::Index>& get_adj_face_rows(Eigen::Index vertex_index) const { return aux.get_vfadj_row(*data)[vertex_index]; }
 	const std::vector<Eigen::Index>& get_adj_face_cols(Eigen::Index vertex_index) const { return aux.get_vfadj_col(*data)[vertex_index]; }
 	Eigen::SparseMatrix<int>::InnerIterator get_adj_face_iterator(Eigen::Index face_index) const { return Eigen::SparseMatrix<int>::InnerIterator(aux.get_fadj(*data), face_index); }
+	const std::vector<std::vector<Eigen::Index>> get_boundary_loops() const { return aux.get_boundary_loops(*data); }
+	const std::unordered_set<Eigen::Index> get_boundary_vertices() const { return aux.get_boundary_vertices(*data); }
 	const Eigen::MatrixXd& get_vertex_normals() const { return aux.get_vertex_normals(*data); }
 	const Eigen::SparseMatrix<double>& get_laplacian() const { return aux.get_laplacian(*data); }
 	Eigen::SparseMatrix<double>::InnerIterator get_laplacian_iterator(Eigen::Index vertex_index) const { return Eigen::SparseMatrix<double>::InnerIterator(aux.get_laplacian(*data), vertex_index); }

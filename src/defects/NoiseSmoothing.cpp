@@ -1,9 +1,15 @@
 #include "NoiseSmoothing.h"
 
-// TODO test all detection and smoothing methods
-
 void defects::NoiseSmoothing::_detect(const Mesh& mesh)
 {
+	if (smooth_all)
+	{
+		Eigen::Index num_vertices = mesh.get_vertices().rows();
+		for (Eigen::Index i = 0; i < num_vertices; ++i)
+			noisy_vertices.push_back(i);
+		return;
+	}
+
 	void(defects::NoiseSmoothing::*detect_func)(const Mesh&) = nullptr;
 	switch (detection_method)
 	{
@@ -15,9 +21,6 @@ void defects::NoiseSmoothing::_detect(const Mesh& mesh)
 		break;
 	case DetectionMethod::FEATURE_SENSITIVE:
 		detect_func = &defects::NoiseSmoothing::detect_feature_sensitive;
-		break;
-	case DetectionMethod::EIGEN_VALUES:
-		detect_func = &defects::NoiseSmoothing::detect_eigen_values;
 		break;
 	}
 
@@ -62,10 +65,22 @@ void defects::NoiseSmoothing::detect_laplacian_residual(const Mesh& mesh)
 	double mean, stddev;
 	standard_deviation(residuals, mean, stddev);
 	double threshold = mean + stddev * laplacian_tolerance; // if residue exceeds threshold, then statistically it is an outlier and therefore noisy.
-	for (Eigen::Index i = 0; i < residuals.rows(); ++i)
+	if (ignore_boundaries)
 	{
-		if (residuals(i) > threshold)
-			noisy_vertices.push_back(i);
+		const auto& boundary_vertices = mesh.get_boundary_vertices();
+		for (Eigen::Index i = 0; i < residuals.rows(); ++i)
+		{
+			if (!boundary_vertices.count(i) && residuals(i) > threshold)
+				noisy_vertices.push_back(i);
+		}
+	}
+	else
+	{
+		for (Eigen::Index i = 0; i < residuals.rows(); ++i)
+		{
+			if (residuals(i) > threshold)
+				noisy_vertices.push_back(i);
+		}
 	}
 }
 
@@ -75,10 +90,22 @@ void defects::NoiseSmoothing::detect_mean_curvature(const Mesh& mesh)
 	double mean, stddev;
 	standard_deviation(magnitudes, mean, stddev);
 	double threshold = mean + stddev * curvature_tolerance; // if magnitude exceeds threshold, then statistically it is an outlier and therefore noisy.
-	for (Eigen::Index i = 0; i < magnitudes.rows(); ++i)
+	if (ignore_boundaries)
 	{
-		if (magnitudes(i) > threshold)
-			noisy_vertices.push_back(i);
+		const auto& boundary_vertices = mesh.get_boundary_vertices();
+		for (Eigen::Index i = 0; i < magnitudes.rows(); ++i)
+		{
+			if (!boundary_vertices.count(i) && magnitudes(i) > threshold)
+				noisy_vertices.push_back(i);
+		}
+	}
+	else
+	{
+		for (Eigen::Index i = 0; i < magnitudes.rows(); ++i)
+		{
+			if (magnitudes(i) > threshold)
+				noisy_vertices.push_back(i);
+		}
 	}
 }
 
@@ -92,30 +119,32 @@ void defects::NoiseSmoothing::detect_feature_sensitive(const Mesh& mesh)
 	standard_deviation(magnitudes, mean, stddev);
 	double curvature_threshold = mean + stddev * curvature_tolerance;
 
-	for (Eigen::Index i = 0; i < residuals.rows(); ++i)
+	// If residual is high:
+	//     - if magnitude is low: likely noise
+	//     - if magnitude is high: likely feature
+	// If residual is low:
+	//     - if magnitude is low: likely no noise
+	//     - if magnitude is high: likely sharp feature
+	if (ignore_boundaries)
 	{
-		// If residual is high:
-		//     - if magnitude is low: likely noise
-		//     - if magnitude is high: likely feature
-		// If residual is low:
-		//     - if magnitude is low: likely no noise
-		//     - if magnitude is high: likely sharp feature
-		if (residuals(i) > laplacian_threshold && magnitudes(i) <= curvature_threshold)
-			noisy_vertices.push_back(i);
+		const auto& boundary_vertices = mesh.get_boundary_vertices();
+		for (Eigen::Index i = 0; i < residuals.rows(); ++i)
+		{
+			if (!boundary_vertices.count(i) && residuals(i) > laplacian_threshold && magnitudes(i) <= curvature_threshold)
+				noisy_vertices.push_back(i);
+		}
+	}
+	else
+	{
+		for (Eigen::Index i = 0; i < residuals.rows(); ++i)
+		{
+			if (residuals(i) > laplacian_threshold && magnitudes(i) <= curvature_threshold)
+				noisy_vertices.push_back(i);
+		}
 	}
 }
 
-void defects::NoiseSmoothing::detect_eigen_values(const Mesh& mesh)
-{
-	eigen_decomposition_largest(mesh.get_laplacian(), eigen_count, eigen_vectors, eigen_values);
-	for (Eigen::Index i = 0; i < eigen_count; ++i)
-	{
-		if (eigen_values[i] > eigen_value_threshold)
-			noisy_vertices.push_back(i);
-	}
-}
-
-static void laplacian_smoothing(Eigen::MatrixXd& vertices, const std::vector<Eigen::Index> indices, const Eigen::MatrixXd& laplacian_eval, double factor)
+static void laplacian_smoothing(Eigen::MatrixXd& vertices, const std::vector<Eigen::Index> indices, const Eigen::MatrixXd& laplacian_eval, float factor)
 {
 	for (Eigen::Index i : indices)
 	{
@@ -124,7 +153,7 @@ static void laplacian_smoothing(Eigen::MatrixXd& vertices, const std::vector<Eig
 	}
 }
 
-static void laplacian_smoothing(Eigen::MatrixXd& vertices, const std::vector<Eigen::Index> indices, const Eigen::SparseMatrix<double>& laplacian, double factor)
+static void laplacian_smoothing(Eigen::MatrixXd& vertices, const std::vector<Eigen::Index> indices, const Eigen::SparseMatrix<double>& laplacian, float factor)
 {
 	for (Eigen::Index i : indices)
 	{
@@ -159,7 +188,7 @@ void defects::NoiseSmoothing::repair_taubin(Mesh& mesh)
 	}
 }
 
-static void desbrun_smoothing(Eigen::MatrixXd& vertices, const std::vector<Eigen::Index> indices, const Eigen::MatrixXd& laplacian_eval, const Eigen::MatrixXd& normals, double factor)
+static void desbrun_smoothing(Eigen::MatrixXd& vertices, const std::vector<Eigen::Index> indices, const Eigen::MatrixXd& laplacian_eval, const Eigen::MatrixXd& normals, float factor)
 {
 	for (Eigen::Index i : indices)
 	{
@@ -168,7 +197,7 @@ static void desbrun_smoothing(Eigen::MatrixXd& vertices, const std::vector<Eigen
 	}
 }
 
-static void desbrun_smoothing(Eigen::MatrixXd& vertices, const std::vector<Eigen::Index> indices, const Eigen::SparseMatrix<double>& laplacian, const Eigen::MatrixXd& normals, double factor)
+static void desbrun_smoothing(Eigen::MatrixXd& vertices, const std::vector<Eigen::Index> indices, const Eigen::SparseMatrix<double>& laplacian, const Eigen::MatrixXd& normals, float factor)
 {
 	for (Eigen::Index i : indices)
 	{
@@ -213,8 +242,8 @@ void defects::NoiseSmoothing::repair_bilateral(Mesh& mesh)
 			Eigen::RowVector3d displacement = vertex - vertices.row(neighbour);
 			double t = displacement.norm();
 			double h = normal.dot(displacement);
-			double w_c = std::exp(-t * t / (2 * bilateral_closeness_factor * bilateral_closeness_factor));
-			double w_s = std::exp(-h * h / (2 * bilateral_similarity_factor * bilateral_similarity_factor));
+			double w_c = std::exp(-t * t / (2 * bilateral_tangential_factor * bilateral_tangential_factor));
+			double w_s = std::exp(-h * h / (2 * bilateral_normal_factor * bilateral_normal_factor));
 			double w = w_c * w_s;
 			sum += w * h;
 			normalizer += w;

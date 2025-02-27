@@ -1,48 +1,47 @@
-#include "History.h"
+#include "MeshHistory.h"
 
-void History::push(const std::shared_ptr<MeshPrimaryData>& data)
+void MeshHistory::push(const std::shared_ptr<MeshPrimaryData>& data)
 {
 	redo_deque.clear();
 	if (undo_deque.size() == tracking_length)
 		undo_deque.pop_front();
 	undo_deque.push_back(data);
+	++_index;
 }
 
-void History::clear()
+void MeshHistory::clear()
 {
 	undo_deque.clear();
 	redo_deque.clear();
 }
 
-std::shared_ptr<MeshPrimaryData> History::undo()
+std::shared_ptr<MeshPrimaryData> MeshHistory::undo()
 {
-	if (undo_deque.size() == 1)
-		return undo_deque.back();
-	else if (!undo_deque.empty())
+	if (undo_deque.size() > 1)
 	{
-		redo_deque.push_back(std::move(undo_deque.back()));
+		auto data = std::move(undo_deque.back());
 		undo_deque.pop_back();
+		redo_deque.push_back(std::move(data));
+		--_index;
 		return undo_deque.back();
 	}
-	else
-		return nullptr;
+	return nullptr;
 }
 
-std::shared_ptr<MeshPrimaryData> History::redo()
+std::shared_ptr<MeshPrimaryData> MeshHistory::redo()
 {
 	if (!redo_deque.empty())
 	{
 		undo_deque.push_back(std::move(redo_deque.back()));
 		redo_deque.pop_back();
+		++_index;
 		return undo_deque.back();
 	}
-	else if (!undo_deque.empty())
-		return undo_deque.back();
 	else
 		return nullptr;
 }
 
-void History::set_tracking_length(int length)
+void MeshHistory::set_tracking_length(int length)
 {
 	if (length < 1)
 		return;

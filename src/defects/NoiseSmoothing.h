@@ -17,14 +17,14 @@ namespace defects
 		{
 			LAPLACIAN_RESIDUAL,
 			MEAN_CURVATURE,
-			FEATURE_SENSITIVE, // combines laplacian residual and mean curvature
-			EIGEN_VALUES // expensive
+			FEATURE_SENSITIVE // combines laplacian residual and mean curvature
 		} detection_method = DetectionMethod::FEATURE_SENSITIVE;
 
+		bool smooth_all = false;
+		bool ignore_boundaries = true;
+		bool global_noise = true; // TODO implement local noise
 		double laplacian_tolerance = 1.0; // must be positive - only used for LAPLACIAN_RESIDUAL and FEATURE_SENSITIVE
 		double curvature_tolerance = 1.0; // must be positive - only used for MEAN_CURVATURE and FEATURE_SENSITIVE
-		int eigen_count = 10; // must be positive - only used for EIGEN_VALUES
-		double eigen_value_threshold = 1.0; // must be positive - only used for EIGEN_VALUES
 
 		enum class SmoothingMethod
 		{
@@ -34,24 +34,21 @@ namespace defects
 			BILATERAL
 		} smoothing_method = SmoothingMethod::TAUBIN;
 
-		// TODO consider an option to ignore boundary vertices
-
 		int laplacian_iterations = 3; // must be > 0 - only used for LAPLACIAN
-		double laplacian_smoothing_factor = 0.3; // must be between 0.0 and 1.0 / laplacian_iterations - only used for LAPLACIAN
+		float laplacian_smoothing_factor = 0.4f; // must be between 0.0 and 1.0 - only used for LAPLACIAN
 		int taubin_iterations = 3; // must be > 0 - only used for TAUBIN
-		double taubin_shrinking_factor = 0.6; // must be positive, and such that taubin_shrinking_factor + taubin_expanding_factor < 1.0 / taubin_iterations - only used for TAUBIN
-		double taubin_expanding_factor = -0.4; // must be negative, and such that taubin_shrinking_factor + taubin_expanding_factor < 1.0 / taubin_iterations - only used for TAUBIN
+		float taubin_shrinking_factor = 0.6f; // must be between 0.0 and 1.0 - only used for TAUBIN
+		float taubin_expanding_factor = -0.3f; // must be between -1.0 and 0.0 - only used for TAUBIN
 		int desbrun_iterations = 3; // must be > 0 - only used for DESBRUN
-		double desbrun_smoothing_factor = 0.5; // must be between 0.0 and 1.0 / desbrun_iterations - only used for DESBRUN
-		double bilateral_closeness_factor = 1.0; // must be > 0.0 - only used for BILATERAL
-		double bilateral_similarity_factor = 1.0; // must be > 0.0 - only used for BILATERAL
-		double bilateral_smoothing_factor = 0.5; // must be between 0.0 and 1.0 - only used for BILATERAL
+		float desbrun_smoothing_factor = 0.3f; // must be between 0.0 and 1.0 - only used for DESBRUN
+		float bilateral_tangential_factor = 1.0f; // must be > 0.0 - only used for BILATERAL
+		float bilateral_normal_factor = 1.0f; // must be > 0.0 - only used for BILATERAL
+		float bilateral_smoothing_factor = 0.5f; // must be between 0.0 and 1.0 - only used for BILATERAL
 
 	private:
 		void detect_laplacian_residual(const Mesh& mesh);
 		void detect_mean_curvature(const Mesh& mesh);
 		void detect_feature_sensitive(const Mesh& mesh);
-		void detect_eigen_values(const Mesh& mesh);
 
 		void repair_laplacian(Mesh& mesh);
 		void repair_taubin(Mesh& mesh);
@@ -59,8 +56,9 @@ namespace defects
 		void repair_bilateral(Mesh& mesh);
 
 		std::vector<Eigen::Index> noisy_vertices;
-
-		Eigen::MatrixXd eigen_vectors;
 		Eigen::VectorXd eigen_values;
+
+	public:
+		const decltype(noisy_vertices)& get_noisy_vertices() const { return noisy_vertices; }
 	};
 }

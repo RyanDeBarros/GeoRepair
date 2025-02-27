@@ -3,9 +3,11 @@
 #include <igl/opengl/ViewerData.h>
 
 #include <bitset>
+#include <unordered_set>
 
 struct MeshPrimaryData
 {
+	std::string mesh_filename;
 	Eigen::MatrixXd V;
 	Eigen::MatrixXi F;
 	Eigen::MatrixXd VC;
@@ -20,6 +22,8 @@ class MeshAuxiliaryData
 		VADJ,
 		VFADJ,
 		FADJ,
+		BOUNDARY_LOOPS,
+		BOUNDARY_VERTICES,
 		VN,
 		LAPLACIAN,
 		LAPLACIAN_EVAL,
@@ -36,6 +40,8 @@ class MeshAuxiliaryData
 	std::vector<std::vector<Eigen::Index>> VFADJ_row;
 	std::vector<std::vector<Eigen::Index>> VFADJ_col;
 	Eigen::SparseMatrix<int> FADJ;
+	std::vector<std::vector<Eigen::Index>> boundary_loops;
+	std::unordered_set<Eigen::Index> boundary_vertices;
 	Eigen::MatrixXd VN;
 	Eigen::SparseMatrix<double> laplacian;
 	Eigen::MatrixXd laplacian_eval;
@@ -52,6 +58,8 @@ public:
 	const decltype(VFADJ_row)& get_vfadj_row(const MeshPrimaryData&);
 	const decltype(VFADJ_col)& get_vfadj_col(const MeshPrimaryData&);
 	const decltype(FADJ)& get_fadj(const MeshPrimaryData&);
+	const decltype(boundary_loops)& get_boundary_loops(const MeshPrimaryData&);
+	const decltype(boundary_vertices)& get_boundary_vertices(const MeshPrimaryData&);
 	const decltype(VN)& get_vertex_normals(const MeshPrimaryData&);
 	const decltype(laplacian)& get_laplacian(const MeshPrimaryData&);
 	const decltype(laplacian_eval)& get_laplacian_eval(const MeshPrimaryData&);
