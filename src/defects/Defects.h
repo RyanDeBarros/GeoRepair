@@ -78,9 +78,27 @@ public:
 		return *list[defect];
 	}
 
+	void repair_all(Mesh& mesh)
+	{
+		bool any_detected = false;
+		for (auto& defect : list)
+		{
+			if (defect->in_detected_state())
+			{
+				defect->_repair(mesh);
+				defect->reset();
+				any_detected = true;
+			}
+		}
+		if (any_detected)
+			mesh.push();
+	}
+
 	void reset_all()
 	{
 		for (auto& defect : list)
 			defect->reset();
 	}
+
+	size_t size() const { return list.size(); }
 };

@@ -15,7 +15,6 @@ void defects::NonManifoldEdges::_detect(const Mesh& mesh)
 void defects::NonManifoldEdges::_repair(Mesh& mesh)
 {
     // nothing to repair, as there is no obvious general solution to fixing non-manifold edges, which might even be intentional.
-    // TODO disclaimer of the above comment
 }
 
 void defects::NonManifoldEdges::reset()

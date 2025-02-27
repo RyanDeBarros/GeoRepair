@@ -6,7 +6,7 @@
 #include <igl/invert_diag.h>
 #include <igl/boundary_loop.h>
 
-// TODO disclaimer that triangulation will occur, and no information (for now, anyways) about texture coordinates, materials, etc., will be retained.
+#include <stack>
 
 void MeshAuxiliaryData::reset()
 {
@@ -58,6 +58,7 @@ const decltype(MeshAuxiliaryData::boundary_loops)& MeshAuxiliaryData::get_bounda
 	if (!auxiliary_flags.test((size_t)AuxiliaryFlags::BOUNDARY_LOOPS))
 	{
 		auxiliary_flags.set((size_t)AuxiliaryFlags::BOUNDARY_LOOPS);
+		boundary_loops.clear(); // igl::boundary_loop doesn't explicitly clear existing loops
 		igl::boundary_loop(data.F, boundary_loops);
 	}
 	return boundary_loops;
@@ -100,9 +101,9 @@ const decltype(MeshAuxiliaryData::laplacian)& MeshAuxiliaryData::get_laplacian(c
 		for (Eigen::Index i = 0; i < diag.rows(); ++i)
 			if (diag(i) == 0) diag(0) = 1.0; // isolated vertices
 
-		Eigen::SparseMatrix<double> inv_degree(laplacian.rows(), laplacian.cols());
-		inv_degree.setIdentity();
-		laplacian = (inv_degree * diag.cwiseInverse().asDiagonal()) * laplacian;
+		Eigen::SparseMatrix<double> identity(laplacian.rows(), laplacian.cols());
+		identity.setIdentity();
+		laplacian = (identity * diag.cwiseInverse().asDiagonal()) * laplacian;
 	}
 	return laplacian;
 }
@@ -179,16 +180,27 @@ const decltype(MeshAuxiliaryData::connected_submesh_roots)& MeshAuxiliaryData::g
 	return connected_submesh_roots;
 }
 
-static void connected_submesh_dfs(const Eigen::SparseMatrix<int>& fadj, Eigen::Index face_index, std::vector<bool>& visited_faces, std::vector<Eigen::Index>& subdata_faces)
+static void connected_submesh_dfs(const Eigen::SparseMatrix<int>& fadj, Eigen::Index start_face, std::vector<bool>& visited_faces, std::vector<Eigen::Index>& submesh_faces)
 {
-	visited_faces[face_index] = true;
-	subdata_faces.push_back(face_index);
+	std::stack<Eigen::Index> stack;
+	stack.push(start_face);
+	visited_faces[start_face] = true;
 
-	for (Eigen::SparseMatrix<int>::InnerIterator iter(fadj, face_index); iter; ++iter)
+	while (!stack.empty())
 	{
-		Eigen::Index neighbour_face = iter.index();
-		if (!visited_faces[neighbour_face])
-			connected_submesh_dfs(fadj, neighbour_face, visited_faces, subdata_faces);
+		Eigen::Index face_index = stack.top();
+		stack.pop();
+		submesh_faces.push_back(face_index);
+
+		for (Eigen::SparseMatrix<int>::InnerIterator iter(fadj, face_index); iter; ++iter)
+		{
+			Eigen::Index neighbour_face = iter.index();
+			if (!visited_faces[neighbour_face])
+			{
+				visited_faces[neighbour_face] = true;
+				stack.push(neighbour_face);
+			}
+		}
 	}
 }
 
@@ -203,10 +215,10 @@ void MeshAuxiliaryData::compute_connected_submeshes(const MeshPrimaryData& data)
 	{
 		if (!visited_faces[i])
 		{
-			std::vector<Eigen::Index> subdata_faces;
+			std::vector<Eigen::Index> submesh_faces;
 			connected_submesh_roots[i] = j++;
-			connected_submesh_dfs(fadj, i, visited_faces, subdata_faces);
-			connected_submeshes.push_back(subdata_faces);
+			connected_submesh_dfs(fadj, i, visited_faces, submesh_faces);
+			connected_submeshes.push_back(submesh_faces);
 		}
 	}
 }

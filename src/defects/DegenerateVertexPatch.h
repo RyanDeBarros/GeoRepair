@@ -2,7 +2,6 @@
 
 #include "Common.h"
 
-// TODO disclaimer that DegenerateVertexPatch may cause duplicate faces
 namespace defects
 {
 	struct DegenerateVertexPatch : public DefectBase

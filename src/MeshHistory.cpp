@@ -1,6 +1,6 @@
 #include "MeshHistory.h"
 
-void MeshHistory::push(const std::shared_ptr<MeshPrimaryData>& data)
+void MeshHistory::push(const std::shared_ptr<MeshData>& data)
 {
 	redo_deque.clear();
 	if (undo_deque.size() == tracking_length)
@@ -15,7 +15,7 @@ void MeshHistory::clear()
 	redo_deque.clear();
 }
 
-std::shared_ptr<MeshPrimaryData> MeshHistory::undo()
+std::shared_ptr<MeshData> MeshHistory::undo()
 {
 	if (undo_deque.size() > 1)
 	{
@@ -28,7 +28,7 @@ std::shared_ptr<MeshPrimaryData> MeshHistory::undo()
 	return nullptr;
 }
 
-std::shared_ptr<MeshPrimaryData> MeshHistory::redo()
+std::shared_ptr<MeshData> MeshHistory::redo()
 {
 	if (!redo_deque.empty())
 	{

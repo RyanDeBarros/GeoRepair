@@ -72,10 +72,9 @@ private:
 	void clear_visualisation();
 	void restore_visualisation();
 
-	// TODO option to detect all and repair all in menu
-
 	int opened_header = -1;
 	void render_menu_gui();
+	void render_header_gui();
 	void render_degenerate_faces_gui();
 	void render_degenerate_vertex_patch_gui();
 	void render_duplicate_faces_gui();
@@ -230,6 +229,7 @@ void GeoRepair::render_gui()
 	if (ImGui::Begin("Geo Repair", nullptr, ImGuiWindowFlags_NoSavedSettings))
 	{
 		render_menu_gui();
+		render_header_gui();
 		render_degenerate_faces_gui();
 		render_degenerate_vertex_patch_gui();
 		render_duplicate_faces_gui();
@@ -295,6 +295,8 @@ void GeoRepair::render_menu_gui()
 				load_mesh();
 			if (ImGui::MenuItem("Save mesh", "Ctrl+S"))
 				save_mesh();
+			if (ImGui::MenuItem("Info"))
+				ImGui::OpenPopup("Info");
 			ImGui::EndMenu();
 		}
 		if (ImGui::BeginMenu("Edit"))
@@ -311,6 +313,57 @@ void GeoRepair::render_menu_gui()
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();
+	}
+
+	if (ImGui::BeginPopupModal("Info", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::Text("GeoRepair detects and repairs common mesh defects.");
+		ImGui::Text("Note that triangulation happens automatically, faceless edges are discarded, and no information about texture coordinates, materials, etc. will be retained."); // TODO if this is changed, update disclaimer
+		if (ImGui::Button("OK"))
+			ImGui::CloseCurrentPopup();
+		ImGui::EndPopup();
+	}
+}
+
+void GeoRepair::render_header_gui()
+{
+	if (ImGui::Button("Detect All"))
+	{
+		reset_colors();
+		glfwSetCursor(viewer.window, wait_cursor);
+		bool any_detected = false;
+		for (size_t i = 0; i < defect_list.size(); ++i)
+		{
+			defect_list[(Defect)i].detect(mesh);
+			if (defect_list[(Defect)i].in_detected_state())
+				any_detected = true;
+		}
+		glfwSetCursor(viewer.window, arrow_cursor);
+		if (any_detected)
+		{
+			mesh.reset_vertex_colors();
+			mesh.reset_face_colors();
+			mesh.reset_edge_colors();
+			restore_visualisation();
+		}
+		else
+			no_detection = true;
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Repair All"))
+	{
+		glfwSetCursor(viewer.window, wait_cursor);
+		defect_list.repair_all(mesh);
+		glfwSetCursor(viewer.window, arrow_cursor);
+		refresh_mesh();
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Reset All"))
+	{
+		glfwSetCursor(viewer.window, wait_cursor);
+		defect_list.reset_all();
+		glfwSetCursor(viewer.window, arrow_cursor);
+		reset_colors();
 	}
 }
 
@@ -361,6 +414,8 @@ void GeoRepair::render_degenerate_vertex_patch_gui()
 	render_defect_gui_header(Defect::DEGENERATE_VERTEX_PATCH);
 	if (ImGui::CollapsingHeader("Degenerate Vertex Patches"))
 	{
+		if (ImGui::IsItemHovered())
+			ImGui::SetTooltip("Note that repairing may cause duplicate faces. Use Degenerate Faces if that's not wanted.");
 		opened_header = Defect::DEGENERATE_VERTEX_PATCH;
 		auto& degenerate_vertex_patch = defect_list.get<Defect::DEGENERATE_VERTEX_PATCH>();
 		bool reset = false;

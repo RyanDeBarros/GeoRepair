@@ -15,7 +15,6 @@ struct MeshPrimaryData
 	Eigen::MatrixXd E1; // 1st vertices in edges
 	Eigen::MatrixXd E2; // 2nd vertices in edges
 	Eigen::MatrixXd EC; // edge colors
-	// TODO face/edge colors
 };
 
 // used for lazy loading auxiliary data structures
@@ -76,4 +75,41 @@ public:
 
 private:
 	void compute_connected_submeshes(const MeshPrimaryData&);
+};
+
+class MeshData
+{
+	mutable MeshAuxiliaryData aux;
+
+public:
+	MeshPrimaryData primary;
+
+	MeshData() = default;
+	MeshData(const MeshData& other) : primary(other.primary) {}
+	MeshData& operator=(const MeshData& other)
+	{
+		if (this != &other)
+		{
+			primary = other.primary;
+			aux.reset();
+		}
+		return *this;
+	}
+
+	void reset_aux() const { aux.reset(); }
+	const std::vector<std::vector<Eigen::Index>>& get_vadj() const { return aux.get_vadj(primary); }
+	const std::vector<std::vector<Eigen::Index>>& get_vfadj_row() const { return aux.get_vfadj_row(primary); }
+	const std::vector<std::vector<Eigen::Index>>& get_vfadj_col() const { return aux.get_vfadj_col(primary); }
+	const Eigen::SparseMatrix<int>& get_fadj() const { return aux.get_fadj(primary); }
+	const std::vector<std::vector<Eigen::Index>>& get_boundary_loops() const { return aux.get_boundary_loops(primary); }
+	const std::unordered_set<Eigen::Index>& get_boundary_vertices() const { return aux.get_boundary_vertices(primary); }
+	const Eigen::MatrixXd& get_vertex_normals() const { return aux.get_vertex_normals(primary); }
+	const Eigen::SparseMatrix<double>& get_laplacian() const { return aux.get_laplacian(primary); }
+	const Eigen::MatrixXd& get_laplacian_eval() const { return aux.get_laplacian_eval(primary); }
+	const Eigen::VectorXd& get_laplacian_residuals() const { return aux.get_laplacian_residuals(primary); }
+	const Eigen::SparseMatrix<double>& get_mass() const { return aux.get_mass(primary); }
+	const Eigen::MatrixXd& get_mean_curvatures() const { return aux.get_mean_curvatures(primary); }
+	const Eigen::VectorXd& get_mean_curvature_magnitudes() const { return aux.get_mean_curvature_magnitudes(primary); }
+	const std::vector<std::vector<Eigen::Index>>& get_connected_submeshes() const { return aux.get_connected_submeshes(primary); }
+	const std::unordered_map<Eigen::Index, size_t>& get_connected_submesh_roots() const { return aux.get_connected_submesh_roots(primary); }
 };

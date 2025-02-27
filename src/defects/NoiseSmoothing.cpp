@@ -217,7 +217,7 @@ void defects::NoiseSmoothing::repair_desbrun(Mesh& mesh)
 		for (int i = 1; i < laplacian_iterations; ++i)
 		{
 			Eigen::MatrixXd normals;
-			igl::per_vertex_normals(vertices, mesh.get_faces(), normals); // TODO later only re-compute normals for noisy vertices
+			igl::per_vertex_normals(vertices, mesh.get_faces(), normals); // TODO later only re-compute normals for noisy vertices. if smooth_all though, *do* re-compute for all vertices.
 			desbrun_smoothing(vertices, noisy_vertices, laplacian, normals, desbrun_smoothing_factor);
 		}
 	}

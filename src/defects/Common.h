@@ -11,8 +11,6 @@ namespace defects
 		void repair(Mesh& mesh);
 		virtual void reset() = 0;
 		virtual bool in_detected_state() const = 0;
-
-	protected:
 		virtual void _detect(const Mesh&) = 0;
 		virtual void _repair(Mesh&) = 0;
 	};
