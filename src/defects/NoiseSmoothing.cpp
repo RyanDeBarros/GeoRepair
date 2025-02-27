@@ -64,7 +64,7 @@ void defects::NoiseSmoothing::detect_laplacian_residual(const Mesh& mesh)
 	const auto& residuals = mesh.get_laplacian_residuals();
 	double mean, stddev;
 	standard_deviation(residuals, mean, stddev);
-	double threshold = mean + stddev * laplacian_tolerance; // if residue exceeds threshold, then statistically it is an outlier and therefore noisy.
+	double threshold = mean + stddev * laplacian_sensitivity; // if residue exceeds threshold, then statistically it is an outlier and therefore noisy.
 	if (ignore_boundaries)
 	{
 		const auto& boundary_vertices = mesh.get_boundary_vertices();
@@ -89,7 +89,7 @@ void defects::NoiseSmoothing::detect_mean_curvature(const Mesh& mesh)
 	const auto& magnitudes = mesh.get_mean_curvature_magnitudes();
 	double mean, stddev;
 	standard_deviation(magnitudes, mean, stddev);
-	double threshold = mean + stddev * curvature_tolerance; // if magnitude exceeds threshold, then statistically it is an outlier and therefore noisy.
+	double threshold = mean + stddev * curvature_sensitivity; // if magnitude exceeds threshold, then statistically it is an outlier and therefore noisy.
 	if (ignore_boundaries)
 	{
 		const auto& boundary_vertices = mesh.get_boundary_vertices();
@@ -114,10 +114,10 @@ void defects::NoiseSmoothing::detect_feature_sensitive(const Mesh& mesh)
 	double mean, stddev;
 	const auto& residuals = mesh.get_laplacian_residuals();
 	standard_deviation(residuals, mean, stddev);
-	double laplacian_threshold = mean + stddev * laplacian_tolerance;
+	double laplacian_threshold = mean + stddev * laplacian_sensitivity;
 	const auto& magnitudes = mesh.get_mean_curvature_magnitudes();
 	standard_deviation(magnitudes, mean, stddev);
-	double curvature_threshold = mean + stddev * curvature_tolerance;
+	double curvature_threshold = mean + stddev * curvature_sensitivity;
 
 	// If residual is high:
 	//     - if magnitude is low: likely noise

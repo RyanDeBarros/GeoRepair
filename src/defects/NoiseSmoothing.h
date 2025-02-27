@@ -23,8 +23,8 @@ namespace defects
 		bool smooth_all = false;
 		bool ignore_boundaries = true;
 		bool global_noise = true; // TODO implement local noise
-		double laplacian_tolerance = 1.0; // must be positive - only used for LAPLACIAN_RESIDUAL and FEATURE_SENSITIVE
-		double curvature_tolerance = 1.0; // must be positive - only used for MEAN_CURVATURE and FEATURE_SENSITIVE
+		double laplacian_sensitivity = 1.0; // must be positive - only used for LAPLACIAN_RESIDUAL and FEATURE_SENSITIVE
+		double curvature_sensitivity = 1.0; // must be positive - only used for MEAN_CURVATURE and FEATURE_SENSITIVE
 
 		enum class SmoothingMethod
 		{

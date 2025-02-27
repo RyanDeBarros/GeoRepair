@@ -537,22 +537,22 @@ void GeoRepair::render_noise_smoothing_gui()
 		if (noise_smoothing.detection_method == decltype(noise_smoothing.detection_method)::LAPLACIAN_RESIDUAL
 			|| noise_smoothing.detection_method == decltype(noise_smoothing.detection_method)::FEATURE_SENSITIVE)
 		{
-			double tolerance = noise_smoothing.laplacian_tolerance;
+			double sensitivity = noise_smoothing.laplacian_sensitivity;
 			ImGui::SetNextItemWidth(200);
-			if (ImGui::InputDouble("Laplacian Tolerance", &tolerance) && tolerance >= 0.0)
+			if (ImGui::InputDouble("Laplacian Sensitivity", &sensitivity) && sensitivity >= 0.0)
 			{
-				noise_smoothing.laplacian_tolerance = tolerance;
+				noise_smoothing.laplacian_sensitivity = sensitivity;
 				reset = true;
 			}
 		}
 		if (noise_smoothing.detection_method == decltype(noise_smoothing.detection_method)::MEAN_CURVATURE
 			|| noise_smoothing.detection_method == decltype(noise_smoothing.detection_method)::FEATURE_SENSITIVE)
 		{
-			double tolerance = noise_smoothing.curvature_tolerance;
+			double sensitivity = noise_smoothing.curvature_sensitivity;
 			ImGui::SetNextItemWidth(200);
-			if (ImGui::InputDouble("Curvature Tolerance", &tolerance) && tolerance >= 0.0)
+			if (ImGui::InputDouble("Curvature Sensitivity", &sensitivity) && sensitivity >= 0.0)
 			{
-				noise_smoothing.curvature_tolerance = tolerance;
+				noise_smoothing.curvature_sensitivity = sensitivity;
 				reset = true;
 			}
 		}
