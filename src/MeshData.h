@@ -8,9 +8,13 @@
 struct MeshPrimaryData
 {
 	std::string mesh_filename;
-	Eigen::MatrixXd V;
-	Eigen::MatrixXi F;
-	Eigen::MatrixXd VC;
+	Eigen::MatrixXd V; // vertices
+	Eigen::MatrixXi F; // faces
+	Eigen::MatrixXd VC; // vertex colors
+	Eigen::MatrixXd FC; // face colors
+	Eigen::MatrixXd E1; // 1st vertices in edges
+	Eigen::MatrixXd E2; // 2nd vertices in edges
+	Eigen::MatrixXd EC; // edge colors
 	// TODO face/edge colors
 };
 

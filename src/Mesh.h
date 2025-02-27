@@ -27,6 +27,18 @@ public:
 	decltype(data->F)& get_faces() { return data->F; }
 	const decltype(data->VC)& get_vertex_colors() const { return data->VC; }
 	decltype(data->VC)& get_vertex_colors() { return data->VC; }
+	const decltype(data->FC)& get_face_colors() const { return data->FC; }
+	decltype(data->FC)& get_face_colors() { return data->FC; }
+	const decltype(data->E1)& get_edges_1() const { return data->E1; }
+	decltype(data->E1)& get_edges_1() { return data->E1; }
+	const decltype(data->E1)& get_edges_2() const { return data->E2; }
+	decltype(data->E1)& get_edges_2() { return data->E2; }
+	const decltype(data->EC)& get_edge_colors() const { return data->EC; }
+	decltype(data->EC)& get_edge_colors() { return data->EC; }
+
+	void reset_vertex_colors();
+	void reset_face_colors();
+	void reset_edge_colors();
 
 	const std::vector<Eigen::Index>& get_adj_vertices(Eigen::Index vertex_index) const { return aux.get_vadj(*data)[vertex_index]; }
 	const std::vector<Eigen::Index>& get_adj_face_rows(Eigen::Index vertex_index) const { return aux.get_vfadj_row(*data)[vertex_index]; }

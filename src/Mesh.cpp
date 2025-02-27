@@ -4,6 +4,7 @@
 #include <igl/write_triangle_mesh.h>
 
 #include "defects/Common.h"
+#include "GeoRepair.h"
 
 // TODO not only are texture coordinates, materials, etc. lost after loading the mesh, so are faceless edges.
 bool Mesh::load(const char* filename)
@@ -13,8 +14,9 @@ bool Mesh::load(const char* filename)
 	// TODO eventually, add support for texture coordinates, etc., for specific file extensions
 	if (!igl::read_triangle_mesh(filename, data->V, data->F))
 		return false;
-	data->VC.resize(1, 3);
-	data->VC.row(0) = Eigen::RowVector3d(0.5, 0.5, 0.5);
+	reset_vertex_colors();
+	reset_face_colors();
+	reset_edge_colors();
 
 	// remove invalid faces
 	Eigen::Index max_vertex = data->V.rows() - 1;
@@ -61,6 +63,25 @@ bool Mesh::redo()
 		return true;
 	}
 	return false;
+}
+
+void Mesh::reset_vertex_colors()
+{
+	data->VC.resize(1, 3);
+	data->VC.row(0) = colors::vertex::neutral;
+}
+
+void Mesh::reset_face_colors()
+{
+	data->FC.resize(1, 3);
+	data->FC.row(0) = colors::face::neutral;
+}
+
+void Mesh::reset_edge_colors()
+{
+	data->E1.resize(0, 0);
+	data->E2.resize(0, 0);
+	data->EC.resize(0, 0);
 }
 
 static void traverse_submesh_dfs(const Eigen::SparseMatrix<int>& fadj, Eigen::Index face_index, std::vector<bool>& visited_faces, const std::function<void(Eigen::Index face1, Eigen::Index face2)>& adj_process)
