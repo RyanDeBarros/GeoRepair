@@ -24,6 +24,7 @@ namespace defects
 		void repair_pie(Mesh& mesh, const std::vector<Eigen::Index>& boundary, bool increasing);
 
 	public:
+		// TODO add constrained Delaunay ?
 		enum class PatchMethod
 		{
 			FAN,

@@ -5,6 +5,7 @@
 
 #include "defects/Defects.h"
 
+// TODO later add settings for these colors and point/edge sizes
 namespace colors
 {
 	namespace style
@@ -225,7 +226,7 @@ void GeoRepair::save_mesh()
 
 void GeoRepair::render_gui()
 {
-	ImGui::SetNextWindowSize(ImVec2(400, 500), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(400, 600), ImGuiCond_FirstUseEver);
 	if (ImGui::Begin("Geo Repair", nullptr, ImGuiWindowFlags_NoSavedSettings))
 	{
 		render_menu_gui();
@@ -560,8 +561,6 @@ void GeoRepair::render_noise_smoothing_gui()
 			reset = true;
 		if (ImGui::Checkbox("Ignore Boundaries", &noise_smoothing.ignore_boundaries))
 			reset = true;
-		if (ImGui::Checkbox("Global Noise", &noise_smoothing.global_noise))
-			reset = true;
 
 		ImGui::Separator();
 
@@ -610,15 +609,17 @@ void GeoRepair::render_noise_smoothing_gui()
 			int iterations = noise_smoothing.desbrun_iterations;
 			ImGui::SetNextItemWidth(200);
 			if (ImGui::InputInt("Iterations", &iterations) && iterations >= 1)
-			{
 				noise_smoothing.desbrun_iterations = iterations;
-			}
 			ImGui::SetNextItemWidth(200);
 			ImGui::SliderFloat("Smoothing Factor", &noise_smoothing.desbrun_smoothing_factor, 0.0f, 1.0f);
 			break;
 		}
 		case decltype(noise_smoothing.smoothing_method)::BILATERAL:
 		{
+			int iterations = noise_smoothing.bilateral_iterations;
+			ImGui::SetNextItemWidth(200);
+			if (ImGui::InputInt("Iterations", &iterations) && iterations >= 1)
+				noise_smoothing.bilateral_iterations = iterations;
 			float factor = noise_smoothing.bilateral_tangential_factor;
 			ImGui::SetNextItemWidth(200);
 			if (ImGui::InputFloat("Tangential Factor", &factor) && factor > 0.0f)
@@ -857,20 +858,25 @@ void GeoRepair::degenerate_faces_detect_success()
 	detect_success_for_degenerate_vertex_patch(mesh_data(), mesh, degenerate_faces.get_degenerate_vertex_patch(), colors::vertex::neutral, colors::vertex::defective);
 	detect_success_for_duplicate_faces(mesh_data(), mesh, degenerate_faces.get_duplicate_faces(), colors::face::neutral, colors::face::defective);
 	mesh.reset_edge_colors();
+	edge_data().clear_edges();
 }
 
 void GeoRepair::degenerate_vertex_patch_detect_success()
 {
 	detect_success_for_degenerate_vertex_patch(mesh_data(), mesh, defect_list.get<Defect::DEGENERATE_VERTEX_PATCH>(), colors::vertex::neutral, colors::vertex::defective);
 	mesh.reset_face_colors();
+	mesh_data().set_colors(mesh.get_face_colors());
 	mesh.reset_edge_colors();
+	edge_data().clear_edges();
 }
 
 void GeoRepair::duplicate_faces_detect_success()
 {
 	detect_success_for_duplicate_faces(mesh_data(), mesh, defect_list.get<Defect::DUPLICATE_FACES>(), colors::face::neutral, colors::face::defective);
 	mesh.reset_vertex_colors();
+	mesh_data().set_points(mesh.get_vertices(), mesh.get_vertex_colors());
 	mesh.reset_edge_colors();
+	edge_data().clear_edges();
 }
 
 void GeoRepair::general_duplicate_vertices_detect_success()
@@ -880,18 +886,33 @@ void GeoRepair::general_duplicate_vertices_detect_success()
 	const auto& defect = defect_list.get<Defect::GENERAL_DUPLICATE_VERTICES>();
 	const auto& squared_distances = defect.get_squared_distances();
 	double squared_tolerance = defect.tolerance * defect.tolerance;
-	
-	for (Eigen::Index i = 0; i < vertex_colors.rows(); ++i)
+	if (squared_tolerance > 0.0)
 	{
-		auto it = squared_distances.find(i);
-		if (it != squared_distances.end())
-			vertex_colors.row(i) = colors::vertex::defective + it->second / squared_tolerance * (colors::vertex::defective_low - colors::vertex::defective);
-		else
-			vertex_colors.row(i) = colors::vertex::neutral;
+		for (Eigen::Index i = 0; i < vertex_colors.rows(); ++i)
+		{
+			auto it = squared_distances.find(i);
+			if (it != squared_distances.end())
+				vertex_colors.row(i) = colors::vertex::defective + it->second / squared_tolerance * (colors::vertex::defective_low - colors::vertex::defective);
+			else
+				vertex_colors.row(i) = colors::vertex::neutral;
+		}
 	}
+	else
+	{
+		for (Eigen::Index i = 0; i < vertex_colors.rows(); ++i)
+		{
+			if (squared_distances.count(i))
+				vertex_colors.row(i) = colors::vertex::defective;
+			else
+				vertex_colors.row(i) = colors::vertex::neutral;
+		}
+	}
+
 	mesh_data().set_points(mesh.get_vertices(), vertex_colors);
 	mesh.reset_face_colors();
+	mesh_data().set_colors(mesh.get_face_colors());
 	mesh.reset_edge_colors();
+	edge_data().clear_edges();
 }
 
 void GeoRepair::inverted_normals_detect_success()
@@ -927,7 +948,9 @@ void GeoRepair::inverted_normals_detect_success()
 
 	mesh_data().set_colors(face_colors);
 	mesh.reset_vertex_colors();
+	mesh_data().set_points(mesh.get_vertices(), mesh.get_vertex_colors());
 	mesh.reset_edge_colors();
+	edge_data().clear_edges();
 }
 
 void GeoRepair::noise_smoothing_detect_success()
@@ -949,7 +972,9 @@ void GeoRepair::noise_smoothing_detect_success()
 	}
 	mesh_data().set_points(vertices, vertex_colors);
 	mesh.reset_face_colors();
+	mesh_data().set_colors(mesh.get_face_colors());
 	mesh.reset_edge_colors();
+	edge_data().clear_edges();
 }
 
 void GeoRepair::non_manifold_edges_detect_success()
@@ -986,7 +1011,9 @@ void GeoRepair::non_manifold_edges_detect_success()
 
 	edge_data().add_edges(E1, E2, C);
 	mesh.reset_vertex_colors();
+	mesh_data().set_points(vertices, mesh.get_vertex_colors());
 	mesh.reset_face_colors();
+	mesh_data().set_colors(mesh.get_face_colors());
 }
 
 void GeoRepair::null_faces_detect_success()
@@ -1002,8 +1029,8 @@ void GeoRepair::null_faces_detect_success()
 	E1.resize(3 * indices.size(), 3);
 	auto& E2 = mesh.get_edges_2();
 	E2.resize(3 * indices.size(), 3);
-	auto& C = mesh.get_edge_colors();
-	C.resize(3 * indices.size(), 3);
+	auto& EC = mesh.get_edge_colors();
+	EC = colors::edge::defective.replicate(3 * indices.size(), 1);
 	for (Eigen::Index i = 0; i < indices.size(); ++i)
 	{
 		Eigen::Index fi = indices[i];
@@ -1014,9 +1041,6 @@ void GeoRepair::null_faces_detect_success()
 		E2.row(3 * i) = vertices.row(face(1));
 		E2.row(3 * i + 1) = vertices.row(face(2));
 		E2.row(3 * i + 2) = vertices.row(face(0));
-		C.row(3 * i) = colors::edge::defective;
-		C.row(3 * i + 1) = colors::edge::defective;
-		C.row(3 * i + 2) = colors::edge::defective;
 		if (face(0) == face(1) && face(0) == face(2))
 		{
 			vertex_colors.row(face(0)) = colors::vertex::defective;
@@ -1026,8 +1050,9 @@ void GeoRepair::null_faces_detect_success()
 	}
 
 	mesh_data().set_points(mesh.get_vertices(), vertex_colors);
-	edge_data().add_edges(E1, E2, C);
+	edge_data().add_edges(E1, E2, EC);
 	mesh.reset_face_colors();
+	mesh_data().set_colors(mesh.get_face_colors());
 }
 
 void GeoRepair::unbound_vertices_detect_success()
@@ -1048,7 +1073,9 @@ void GeoRepair::unbound_vertices_detect_success()
 	}
 	mesh_data().set_points(mesh.get_vertices(), vertex_colors);
 	mesh.reset_face_colors();
+	mesh_data().set_colors(mesh.get_face_colors());
 	mesh.reset_edge_colors();
+	edge_data().clear_edges();
 }
 
 void GeoRepair::unpatched_holes_detect_success()
@@ -1064,8 +1091,8 @@ void GeoRepair::unpatched_holes_detect_success()
 	E1.resize(num_boundary_vertices, 3);
 	auto& E2 = mesh.get_edges_2();
 	E2.resize(num_boundary_vertices, 3);
-	auto& C = mesh.get_edge_colors();
-	C.resize(num_boundary_vertices, 3);
+	auto& EC = mesh.get_edge_colors();
+	EC = colors::edge::defective.replicate(num_boundary_vertices, 1);
 	
 	size_t offset = 0;
 	for (const auto& boundary : boundaries)
@@ -1077,14 +1104,15 @@ void GeoRepair::unpatched_holes_detect_success()
 				E2.row(i + offset) = vertices.row(boundary[boundary.size() - 1]);
 			else
 				E2.row(i + offset) = vertices.row(boundary[i - 1]);
-			C.row(i + offset) = colors::edge::defective;
 		}
-		edge_data().add_edges(E1, E2, C);
 		offset += boundary.size();
 	}
 	
+	edge_data().add_edges(E1, E2, EC);
 	mesh.reset_vertex_colors();
+	mesh_data().set_points(vertices, mesh.get_vertex_colors());
 	mesh.reset_face_colors();
+	mesh_data().set_colors(mesh.get_face_colors());
 }
 
 void GeoRepair::reset_colors()

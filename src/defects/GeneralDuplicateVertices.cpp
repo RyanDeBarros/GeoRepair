@@ -4,6 +4,12 @@
 
 void defects::GeneralDuplicateVertices::_detect(const Mesh& mesh)
 {
+	if (tolerance == 0.0)
+	{
+		detect_exact(mesh);
+		return;
+	}
+
 	// TODO a bit slow. try to optimize. might be a case of DEBUG vs RELEASE mode.
 	std::unordered_map<Eigen::Vector3i, std::vector<Eigen::Index>, EigenMatrixHash> voxel_grid;
 	const double inv_tolerance = 1.0 / tolerance;
@@ -64,4 +70,33 @@ void defects::GeneralDuplicateVertices::reset()
 bool defects::GeneralDuplicateVertices::in_detected_state() const
 {
 	return !proximities.empty();
+}
+
+void defects::GeneralDuplicateVertices::detect_exact(const Mesh& mesh)
+{
+	std::unordered_map<Eigen::Vector3i, std::unordered_set<Eigen::Index>, EigenMatrixHash> voxel_grid;
+	const auto& vertices = mesh.get_vertices();
+
+	for (Eigen::Index i = 0; i < vertices.rows(); ++i)
+	{
+		Eigen::RowVector3d vi = vertices.row(i);
+		auto it = voxel_grid.find(vi);
+		if (it != voxel_grid.end())
+			it->second.insert(i);
+		else
+			voxel_grid[vi].insert(i);
+	}
+
+	for (const auto& [_, duplicates] : voxel_grid)
+	{
+		for (auto left = duplicates.begin(); left != duplicates.end(); ++left)
+		{
+			auto right = left;
+			++right;
+			for (; right != duplicates.end(); ++right)
+				proximities.push_back(Proximity{ *left, *right, 0.0 });
+
+			squared_distances[*left] = 0.0;
+		}
+	}
 }

@@ -20,6 +20,8 @@ namespace defects
 		};
 
 	private:
+		void detect_exact(const Mesh& mesh);
+
 		std::vector<Proximity> proximities;
 		std::unordered_map<Eigen::Index, double> squared_distances;
 

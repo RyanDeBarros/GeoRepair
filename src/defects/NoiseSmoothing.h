@@ -22,7 +22,6 @@ namespace defects
 
 		bool smooth_all = false;
 		bool ignore_boundaries = true;
-		bool global_noise = true; // TODO implement local noise
 		double laplacian_sensitivity = 1.0; // must be positive - only used for LAPLACIAN_RESIDUAL and FEATURE_SENSITIVE
 		double curvature_sensitivity = 1.0; // must be positive - only used for MEAN_CURVATURE and FEATURE_SENSITIVE
 
@@ -41,6 +40,7 @@ namespace defects
 		float taubin_expanding_factor = -0.3f; // must be between -1.0 and 0.0 - only used for TAUBIN
 		int desbrun_iterations = 3; // must be > 0 - only used for DESBRUN
 		float desbrun_smoothing_factor = 0.3f; // must be between 0.0 and 1.0 - only used for DESBRUN
+		int bilateral_iterations = 3; // must be > 0 - only used for BILATERAL
 		float bilateral_tangential_factor = 1.0f; // must be > 0.0 - only used for BILATERAL
 		float bilateral_normal_factor = 1.0f; // must be > 0.0 - only used for BILATERAL
 		float bilateral_smoothing_factor = 0.5f; // must be between 0.0 and 1.0 - only used for BILATERAL

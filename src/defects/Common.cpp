@@ -150,6 +150,37 @@ void standard_deviation(const Eigen::VectorXd& vec, double& mean, double& stddev
 		stddev = std::sqrt((vec.array() - mean).square().sum() / vec.rows());
 }
 
+bool on_edge(Eigen::RowVector3d query, Eigen::RowVector3d v1, Eigen::RowVector3d v2)
+{
+	Eigen::RowVector3d dv = v2 - v1;
+	Eigen::RowVector3d vq = query - v1;
+	if (!dv.cross(vq).isZero())
+		return false;
+	double dot = dv.dot(vq);
+	return 0 <= dot && dot <= dv.dot(dv);
+}
+
+bool on_triangle(Eigen::RowVector3d query, Eigen::RowVector3d v1, Eigen::RowVector3d v2, Eigen::RowVector3d v3)
+{
+	Eigen::RowVector3d v12 = v2 - v1;
+	Eigen::RowVector3d v13 = v3 - v1;
+	Eigen::RowVector3d vq = query - v1;
+
+	Eigen::RowVector3d cq2 = v12.cross(vq);
+	Eigen::RowVector3d cq3 = v13.cross(vq);
+
+	// barycentric coordinates
+	double p = cq2.dot(v12) / v12.dot(v12);
+	double q = cq3.dot(v13) / v13.dot(v13);
+
+	return p >= 0 && q >= 0 && p + q <= 1;
+}
+
+bool on_triangle_boundary(Eigen::RowVector3d query, Eigen::RowVector3d v1, Eigen::RowVector3d v2, Eigen::RowVector3d v3)
+{
+	return on_edge(query, v1, v2) || on_edge(query, v1, v3) || on_edge(query, v2, v3);
+}
+
 void remove_rows(Eigen::MatrixXi& mat, std::vector<Eigen::Index>& indices, Eigen::Index maximum_block_height, bool indices_sorted)
 {
 	if (indices.empty())

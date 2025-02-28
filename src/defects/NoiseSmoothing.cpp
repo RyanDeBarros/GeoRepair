@@ -223,13 +223,13 @@ void defects::NoiseSmoothing::repair_desbrun(Mesh& mesh)
 	}
 }
 
-void defects::NoiseSmoothing::repair_bilateral(Mesh& mesh)
+static void bilateral_smoothing(Mesh& mesh, const std::vector<Eigen::Index>& noisy_vertices, const Eigen::MatrixXd& normals, float tangential_factor, float normal_factor, float smoothing_factor)
 {
-	// TODO should this have an iterations parameter?
-	auto& vertices = mesh.get_vertices();
-	const auto& normals = mesh.get_vertex_normals();
 	std::vector<Eigen::RowVector3d> new_vertices;
 	new_vertices.resize(noisy_vertices.size());
+	auto& vertices = mesh.get_vertices();
+	float tangential_multiplier = 1.0f / (2 * tangential_factor * tangential_factor);
+	float normal_multiplier = 1.0f / (2 * normal_factor * normal_factor);
 	for (size_t i = 0; i < noisy_vertices.size(); ++i)
 	{
 		Eigen::Index v = noisy_vertices[i];
@@ -242,14 +242,26 @@ void defects::NoiseSmoothing::repair_bilateral(Mesh& mesh)
 			Eigen::RowVector3d displacement = vertex - vertices.row(neighbour);
 			double t = displacement.norm();
 			double h = normal.dot(displacement);
-			double w_c = std::exp(-t * t / (2 * bilateral_tangential_factor * bilateral_tangential_factor));
-			double w_s = std::exp(-h * h / (2 * bilateral_normal_factor * bilateral_normal_factor));
+			double w_c = std::exp(-t * t * tangential_multiplier));
+			double w_s = std::exp(-h * h * normal_multiplier));
 			double w = w_c * w_s;
 			sum += w * h;
 			normalizer += w;
 		}
-		new_vertices[i] = vertex + bilateral_smoothing_factor * normal * (sum / normalizer);
+		new_vertices[i] = vertex + smoothing_factor * normal * (sum / normalizer);
 	}
+
 	for (size_t i = 0; i < noisy_vertices.size(); ++i)
 		vertices.row(noisy_vertices[i]) = new_vertices[i];
+}
+
+void defects::NoiseSmoothing::repair_bilateral(Mesh& mesh)
+{
+	bilateral_smoothing(mesh, noisy_vertices, mesh.get_vertex_normals(), bilateral_tangential_factor, bilateral_normal_factor, bilateral_smoothing_factor);
+	for (int i = 1; i < bilateral_iterations; ++i)
+	{
+		Eigen::MatrixXd normals;
+		igl::per_vertex_normals(mesh.get_vertices(), mesh.get_faces(), normals);
+		bilateral_smoothing(mesh, noisy_vertices, normals, bilateral_tangential_factor, bilateral_normal_factor, bilateral_smoothing_factor);
+	}
 }

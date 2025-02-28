@@ -38,6 +38,9 @@ extern void rotate_forward_in_place(Eigen::RowVector3i& vector);
 extern void rotate_backward_in_place(Eigen::RowVector3i& vector);
 extern bool same_adjacent_winding_order(Eigen::RowVector3i face1, Eigen::RowVector3i face2);
 extern void standard_deviation(const Eigen::VectorXd& vec, double& mean, double& stddev);
+extern bool on_edge(Eigen::RowVector3d query, Eigen::RowVector3d v1, Eigen::RowVector3d v2);
+extern bool on_triangle(Eigen::RowVector3d query, Eigen::RowVector3d v1, Eigen::RowVector3d v2, Eigen::RowVector3d v3);
+extern bool on_triangle_boundary(Eigen::RowVector3d query, Eigen::RowVector3d v1, Eigen::RowVector3d v2, Eigen::RowVector3d v3);
 
 extern void remove_rows(Eigen::MatrixXi& mat, std::vector<Eigen::Index>& indices, Eigen::Index maximum_block_height, bool indices_sorted);
 extern void remove_rows(Eigen::MatrixXi& mat, std::vector<Eigen::Index>& indices, bool indices_sorted);
