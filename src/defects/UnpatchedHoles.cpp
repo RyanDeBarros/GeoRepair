@@ -37,6 +37,8 @@ void defects::UnpatchedHoles::_repair(Mesh& mesh)
 	const auto& faces = mesh.get_faces();
 	for (const auto& boundary : boundary_vertices)
 	{
+		if (boundary.size() < 3)
+			continue;
 		Eigen::Index v0 = boundary[0], v1 = boundary[1];
 		bool increasing = true;
 		for (Eigen::Index i = 0; i < faces.rows(); ++i)
@@ -117,11 +119,16 @@ bool defects::UnpatchedHoles::in_detected_state() const
 	return !boundary_vertices.empty();
 }
 
+Eigen::Index defects::UnpatchedHoles::get_vertex(const std::vector<Eigen::Index>& boundary, int pos) const
+{
+	return boundary[pos_mod(pos + reference_point_offset, boundary.size())];
+}
+
 void defects::UnpatchedHoles::repair_fan(Mesh& mesh, const std::vector<Eigen::Index>& boundary, bool increasing)
 {
 	for (size_t i = 2; i < boundary.size(); ++i)
 	{
-		Eigen::RowVector3i face(boundary[0], boundary[i - 1], boundary[i]);
+		Eigen::RowVector3i face(get_vertex(boundary, 0), get_vertex(boundary, i - 1), get_vertex(boundary, i));
 		add_faces.push_back(increasing ? face : face.reverse());
 	}
 }
@@ -137,7 +144,7 @@ void defects::UnpatchedHoles::repair_strip(Mesh& mesh, const std::vector<Eigen::
 		{
 			if (j <= i + 1)
 				break;
-			Eigen::RowVector3i face(boundary[i], boundary[i + 1], boundary[j]);
+			Eigen::RowVector3i face(get_vertex(boundary, i), get_vertex(boundary, i + 1), get_vertex(boundary, j));
 			add_faces.push_back(increasing ? face : face.reverse());
 			++i;
 			forward = false;
@@ -146,7 +153,7 @@ void defects::UnpatchedHoles::repair_strip(Mesh& mesh, const std::vector<Eigen::
 		{
 			if (j - 1 <= i)
 				break;
-			Eigen::RowVector3i face(boundary[i], boundary[j - 1], boundary[j]);
+			Eigen::RowVector3i face(get_vertex(boundary, i), get_vertex(boundary, j - 1), get_vertex(boundary, j));
 			add_faces.push_back(increasing ? face : face.reverse());
 			--j;
 			forward = true;
@@ -164,12 +171,12 @@ void defects::UnpatchedHoles::repair_clip(Mesh& mesh, const std::vector<Eigen::I
 		{
 			if (i + k < boundary.size())
 			{
-				Eigen::RowVector3i face(boundary[i], boundary[i + j], boundary[i + k]);
+				Eigen::RowVector3i face(get_vertex(boundary, i), get_vertex(boundary, i + j), get_vertex(boundary, i + k));
 				add_faces.push_back(increasing ? face : face.reverse());
 			}
 			else if (i + k == boundary.size() && i != 0)
 			{
-				Eigen::RowVector3i face(boundary[i], boundary[i + j], boundary[0]);
+				Eigen::RowVector3i face(get_vertex(boundary, i), get_vertex(boundary, i + j), get_vertex(boundary, 0));
 				add_faces.push_back(increasing ? face : face.reverse());
 			}
 			else
@@ -192,12 +199,12 @@ void defects::UnpatchedHoles::repair_pie(Mesh& mesh, const std::vector<Eigen::In
 
 	for (size_t i = 0; i < boundary.size(); ++i)
 	{
-		Eigen::RowVector3i face(mean_index, boundary[i], boundary[(i + 1) % boundary.size()]);
+		Eigen::RowVector3i face(mean_index, get_vertex(boundary, i), get_vertex(boundary, i + 1));
 		add_faces.push_back(increasing ? face : face.reverse());
 	}
 }
 
 void defects::UnpatchedHoles::repair_ear_clipping(Mesh& mesh, const std::vector<Eigen::Index>& boundary, bool increasing)
 {
-	ear_clipping(boundary, mesh.get_vertices(), add_faces, increasing);
+	ear_clipping(boundary, mesh.get_vertices(), add_faces, increasing, ear_clipping_ear_cycle, reference_point_offset);
 }

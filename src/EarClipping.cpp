@@ -51,7 +51,7 @@ struct Node
 	bool should_be_reflexive(const EarClippingData& data) const
 	{
 		auto tr = triangle(data);
-		return data.normal.dot((tr.next - tr.root).cross(tr.prev - tr.root)) < 0.0;
+		return data.normal.dot((tr.next - tr.root).cross(tr.prev - tr.root)) <= 0.0;
 	}
 
 	bool should_be_ear(const EarClippingData& data) const
@@ -304,11 +304,11 @@ static void remove_ear(EarClippingData& data, std::shared_ptr<Node> remove)
 	--data.size;
 }
 
-void ear_clipping(const std::vector<Eigen::Index>& boundary, const Eigen::MatrixXd& vertices, std::vector<Eigen::RowVector3i>& add_faces, bool increasing)
+void ear_clipping(const std::vector<Eigen::Index>& boundary, const Eigen::MatrixXd& vertices, std::vector<Eigen::RowVector3i>& add_faces, bool increasing, int ear_cycle, int reference_point_offset)
 {
 	if (boundary.size() == 3)
 	{
-		Eigen::RowVector3i face(boundary[0], boundary[1], boundary[2]);
+		Eigen::RowVector3i face(boundary[pos_mod(0 + reference_point_offset, boundary.size())], boundary[pos_mod(1 + reference_point_offset, boundary.size())], boundary[pos_mod(2 + reference_point_offset, boundary.size())]);
 		add_faces.push_back(increasing ? face : face.reverse());
 		return;
 	}
@@ -318,8 +318,8 @@ void ear_clipping(const std::vector<Eigen::Index>& boundary, const Eigen::Matrix
 	data.vertices = &vertices;
 
 	// load polygon vertices
-	for (Eigen::Index v : boundary)
-		append_vertex(data, v);
+	for (int i = 0; i < boundary.size(); ++i)
+		append_vertex(data, boundary[pos_mod(i + reference_point_offset, boundary.size())]);
 
 	// compute polygonal normal
 	std::shared_ptr<Node> indexer = data.head_polygon;
@@ -356,11 +356,42 @@ void ear_clipping(const std::vector<Eigen::Index>& boundary, const Eigen::Matrix
 	} while (indexer != data.head_polygon);
 
 	// remove ears and form faces
-	while (data.size > 3)
+	if (ear_cycle == 0)
 	{
-		Eigen::RowVector3i face(data.head_ear->prev_vertex->v, data.head_ear->v, data.head_ear->next_vertex->v);
-		add_faces.push_back(increasing ? face : face.reverse());
-		remove_ear(data, data.head_ear);
+		while (data.size > 3)
+		{
+			Eigen::RowVector3i face(data.head_ear->prev_vertex->v, data.head_ear->v, data.head_ear->next_vertex->v);
+			add_faces.push_back(increasing ? face : face.reverse());
+			remove_ear(data, data.head_ear);
+		}
+	}
+	else if (ear_cycle > 0)
+	{
+		std::shared_ptr<Node> indexer = data.head_ear;
+		while (data.size > 3)
+		{
+			std::shared_ptr<Node> next_indexer = indexer;
+			for (int i = 0; i < ear_cycle; ++i)
+				next_indexer = next_indexer->next_ear;
+			Eigen::RowVector3i face(indexer->prev_vertex->v, indexer->v, indexer->next_vertex->v);
+			add_faces.push_back(increasing ? face : face.reverse());
+			remove_ear(data, indexer);
+			indexer = next_indexer;
+		}
+	}
+	else // if (ear_cycle < 0)
+	{
+		std::shared_ptr<Node> indexer = data.head_ear;
+		while (data.size > 3)
+		{
+			std::shared_ptr<Node> prev_indexer = indexer;
+			for (int i = 0; i > ear_cycle; --i)
+				prev_indexer = prev_indexer->prev_ear;
+			Eigen::RowVector3i face(indexer->prev_vertex->v, indexer->v, indexer->next_vertex->v);
+			add_faces.push_back(increasing ? face : face.reverse());
+			remove_ear(data, indexer);
+			indexer = prev_indexer;
+		}
 	}
 	// final face
 	Eigen::RowVector3i face(data.head_ear->prev_vertex->v, data.head_ear->v, data.head_ear->next_vertex->v);

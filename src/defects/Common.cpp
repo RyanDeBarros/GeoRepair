@@ -195,6 +195,12 @@ bool projects_onto_triangle(Eigen::RowVector3d query, Eigen::RowVector3d root, E
 	return on_triangle(projected_point, root, prev, next);
 }
 
+int pos_mod(int pos, size_t mod)
+{
+	pos = pos % (int)mod;
+	return pos >= 0 ? pos : pos + mod;
+}
+
 void remove_rows(Eigen::MatrixXi& mat, std::vector<Eigen::Index>& indices, Eigen::Index maximum_block_height, bool indices_sorted)
 {
 	if (indices.empty())

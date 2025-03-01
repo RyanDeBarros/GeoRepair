@@ -42,6 +42,7 @@ extern bool on_edge(Eigen::RowVector3d query, Eigen::RowVector3d v1, Eigen::RowV
 extern bool on_triangle(Eigen::RowVector3d query, Eigen::RowVector3d v1, Eigen::RowVector3d v2, Eigen::RowVector3d v3);
 extern bool on_triangle_boundary(Eigen::RowVector3d query, Eigen::RowVector3d v1, Eigen::RowVector3d v2, Eigen::RowVector3d v3);
 extern bool projects_onto_triangle(Eigen::RowVector3d query, Eigen::RowVector3d root, Eigen::RowVector3d prev, Eigen::RowVector3d next);
+extern int pos_mod(int pos, size_t mod);
 
 extern void remove_rows(Eigen::MatrixXi& mat, std::vector<Eigen::Index>& indices, Eigen::Index maximum_block_height, bool indices_sorted);
 extern void remove_rows(Eigen::MatrixXi& mat, std::vector<Eigen::Index>& indices, bool indices_sorted);

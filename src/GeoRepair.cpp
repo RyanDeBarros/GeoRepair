@@ -756,6 +756,19 @@ void GeoRepair::render_unpatched_holes_gui()
 			ImGui::EndCombo();
 		}
 
+		if (unpatched_holes.patch_method == decltype(unpatched_holes.patch_method)::EAR_CLIPPING)
+		{
+			ImGui::SetNextItemWidth(200);
+			ImGui::InputInt("Ear Cycle", &unpatched_holes.ear_clipping_ear_cycle);
+			if (ImGui::IsItemHovered())
+				ImGui::SetTooltip("Sets how ears are traversed, which determines the style of the triangulation. Note that some cycles may generate sliver triangles.");
+		}
+
+		ImGui::SetNextItemWidth(200);
+		ImGui::InputInt("Offset", &unpatched_holes.reference_point_offset);
+		if (ImGui::IsItemHovered())
+			ImGui::SetTooltip("Sets the offset of the reference vertex in repair algorithm.");
+
 		render_defect_base_buttons(Defect::UNPATCHED_HOLES, &GeoRepair::unpatched_holes_detect_success);
 	}
 	render_defect_gui_footer(Defect::UNPATCHED_HOLES);
