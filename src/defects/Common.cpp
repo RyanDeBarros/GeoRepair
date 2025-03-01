@@ -166,19 +166,33 @@ bool on_triangle(Eigen::RowVector3d query, Eigen::RowVector3d v1, Eigen::RowVect
 	Eigen::RowVector3d v13 = v3 - v1;
 	Eigen::RowVector3d vq = query - v1;
 
-	Eigen::RowVector3d cq2 = v12.cross(vq);
-	Eigen::RowVector3d cq3 = v13.cross(vq);
-
+	// cramer's rule
+	double d00 = v12.dot(v12);
+	double d01 = v12.dot(v13);
+	double d11 = v13.dot(v13);
+	double d20 = vq.dot(v12);
+	double d21 = vq.dot(v13);
+	double denom = d00 * d11 - d01 * d01;
+	if (denom == 0.0)
+		return false;
 	// barycentric coordinates
-	double p = cq2.dot(v12) / v12.dot(v12);
-	double q = cq3.dot(v13) / v13.dot(v13);
+	double p = (d11 * d20 - d01 * d21) / denom;
+	double q = (d00 * d21 - d01 * d20) / denom;
+	double w = 1.0 - p - q;
 
-	return p >= 0 && q >= 0 && p + q <= 1;
+	return p >= 0.0 && q >= 0.0 && w >= 0.0;
 }
 
 bool on_triangle_boundary(Eigen::RowVector3d query, Eigen::RowVector3d v1, Eigen::RowVector3d v2, Eigen::RowVector3d v3)
 {
 	return on_edge(query, v1, v2) || on_edge(query, v1, v3) || on_edge(query, v2, v3);
+}
+
+bool projects_onto_triangle(Eigen::RowVector3d query, Eigen::RowVector3d root, Eigen::RowVector3d prev, Eigen::RowVector3d next)
+{
+	Eigen::RowVector3d plane_normal = (next - root).cross(prev - root);
+	Eigen::RowVector3d projected_point = query - ((query - root).dot(plane_normal) / plane_normal.dot(plane_normal)) * plane_normal;
+	return on_triangle(projected_point, root, prev, next);
 }
 
 void remove_rows(Eigen::MatrixXi& mat, std::vector<Eigen::Index>& indices, Eigen::Index maximum_block_height, bool indices_sorted)

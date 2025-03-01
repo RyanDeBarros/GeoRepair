@@ -74,7 +74,7 @@ bool defects::GeneralDuplicateVertices::in_detected_state() const
 
 void defects::GeneralDuplicateVertices::detect_exact(const Mesh& mesh)
 {
-	std::unordered_map<Eigen::Vector3i, std::unordered_set<Eigen::Index>, EigenMatrixHash> voxel_grid;
+	std::unordered_map<Eigen::Vector3d, std::unordered_set<Eigen::Index>, EigenMatrixHash> voxel_grid;
 	const auto& vertices = mesh.get_vertices();
 
 	for (Eigen::Index i = 0; i < vertices.rows(); ++i)

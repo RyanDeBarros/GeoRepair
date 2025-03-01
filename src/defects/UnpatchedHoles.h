@@ -22,16 +22,17 @@ namespace defects
 		void repair_strip(Mesh& mesh, const std::vector<Eigen::Index>& boundary, bool increasing);
 		void repair_clip(Mesh& mesh, const std::vector<Eigen::Index>& boundary, bool increasing);
 		void repair_pie(Mesh& mesh, const std::vector<Eigen::Index>& boundary, bool increasing);
+		void repair_ear_clipping(Mesh& mesh, const std::vector<Eigen::Index>& boundary, bool increasing);
 
 	public:
-		// TODO add constrained Delaunay ?
 		enum class PatchMethod
 		{
 			FAN,
 			STRIP,
 			CLIP,
-			PIE
-		} patch_method = PatchMethod::STRIP;
+			PIE,
+			EAR_CLIPPING
+		} patch_method = PatchMethod::EAR_CLIPPING;
 
 		const decltype(boundary_vertices)& get_boundary_vertices() const { return boundary_vertices; }
 	};

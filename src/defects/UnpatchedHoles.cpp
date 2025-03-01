@@ -1,6 +1,8 @@
 #include "UnpatchedHoles.h"
 
-// TODO split concave n-gons into convex sub-n-gons so there's no z-fighting with new faces
+#include "../EarClipping.h"
+
+// TODO split concave n-gons into convex sub-n-gons to respect concavities (not necessary for ear clipping though)
 
 void defects::UnpatchedHoles::_detect(const Mesh& mesh)
 {
@@ -26,6 +28,9 @@ void defects::UnpatchedHoles::_repair(Mesh& mesh)
 		break;
 	case PatchMethod::PIE:
 		repair_func = &defects::UnpatchedHoles::repair_pie;
+		break;
+	case PatchMethod::EAR_CLIPPING:
+		repair_func = &defects::UnpatchedHoles::repair_ear_clipping;
 		break;
 	}
 	
@@ -190,4 +195,9 @@ void defects::UnpatchedHoles::repair_pie(Mesh& mesh, const std::vector<Eigen::In
 		Eigen::RowVector3i face(mean_index, boundary[i], boundary[(i + 1) % boundary.size()]);
 		add_faces.push_back(increasing ? face : face.reverse());
 	}
+}
+
+void defects::UnpatchedHoles::repair_ear_clipping(Mesh& mesh, const std::vector<Eigen::Index>& boundary, bool increasing)
+{
+	ear_clipping(boundary, mesh.get_vertices(), add_faces, increasing);
 }

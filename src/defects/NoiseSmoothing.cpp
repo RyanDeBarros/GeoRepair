@@ -242,8 +242,8 @@ static void bilateral_smoothing(Mesh& mesh, const std::vector<Eigen::Index>& noi
 			Eigen::RowVector3d displacement = vertex - vertices.row(neighbour);
 			double t = displacement.norm();
 			double h = normal.dot(displacement);
-			double w_c = std::exp(-t * t * tangential_multiplier));
-			double w_s = std::exp(-h * h * normal_multiplier));
+			double w_c = std::exp(-t * t * tangential_multiplier);
+			double w_s = std::exp(-h * h * normal_multiplier);
 			double w = w_c * w_s;
 			sum += w * h;
 			normalizer += w;

@@ -5,6 +5,8 @@
 
 #include "defects/Defects.h"
 
+// TODO include research papers in README.md
+
 // TODO later add settings for these colors and point/edge sizes
 namespace colors
 {
@@ -187,7 +189,7 @@ void GeoRepair::init()
 
 
 			// TODO remove
-			load_mesh("../assets/noise.obj");
+			load_mesh("../assets/hole.obj");
 
 
 
@@ -739,11 +741,12 @@ void GeoRepair::render_unpatched_holes_gui()
 		opened_header = Defect::UNPATCHED_HOLES;
 		auto& unpatched_holes = defect_list.get<Defect::UNPATCHED_HOLES>();
 
-		static const char* patch_methods[] = { "Fan", "Strip", "Clip", "Pie" };
+		static const int num_patch_methods = 5;
+		static const char* patch_methods[num_patch_methods] = { "Fan", "Strip", "Clip", "Pie", "Ear Clipping" };
 		ImGui::SetNextItemWidth(200);
 		if (ImGui::BeginCombo("Patch Method", patch_methods[(int)unpatched_holes.patch_method]))
 		{
-			for (int i = 0; i < 4; ++i)
+			for (int i = 0; i < num_patch_methods; ++i)
 			{
 				if (ImGui::Selectable(patch_methods[i], i == (int)unpatched_holes.patch_method))
 					unpatched_holes.patch_method = decltype(unpatched_holes.patch_method)(i);
