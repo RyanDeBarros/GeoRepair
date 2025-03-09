@@ -55,6 +55,7 @@ public:
 	const Eigen::VectorXd& get_mean_curvature_magnitudes() const { return data->get_mean_curvature_magnitudes(); }
 
 	const std::vector<std::vector<Eigen::Index>>& get_connected_submeshes() const { return data->get_connected_submeshes(); }
+	const std::unordered_map<Eigen::Index, Eigen::Index>& get_connected_submesh_roots() const { return data->get_connected_submesh_roots(); }
 	size_t connected_submesh_index(Eigen::Index submesh_root) const { return data->get_connected_submesh_roots().find(submesh_root)->second; }
 	const std::vector<Eigen::Index>& get_connected_submesh(Eigen::Index submesh_root) const { return data->get_connected_submeshes()[connected_submesh_index(submesh_root)]; }
 

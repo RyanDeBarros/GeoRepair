@@ -10,5 +10,6 @@ GeoRepair is an application using libigl under the hood to detect and repair com
 * Inverted normals
 * Non-manifold edges
 * Invalid vertex/face values
+* Unconnected submeshes
 
 Each feature has customizable parameters, and there is also an undo/redo system to track changes.

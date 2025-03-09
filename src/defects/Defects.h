@@ -9,6 +9,7 @@
 #include "NonManifoldEdges.h"
 #include "NullFaces.h"
 #include "UnboundVertices.h"
+#include "UnconnectedSubmeshes.h"
 #include "UnpatchedHoles.h"
 
 enum Defect
@@ -22,6 +23,7 @@ enum Defect
 	NON_MANIFOLD_EDGES,
 	NULL_FACES,
 	UNBOUND_VERTICES,
+	UNCONNECTED_SUBMESHES,
 	UNPATCHED_HOLES
 };
 
@@ -41,6 +43,7 @@ public:
 		list.push_back(std::make_unique<defects::NonManifoldEdges>());
 		list.push_back(std::make_unique<defects::NullFaces>());
 		list.push_back(std::make_unique<defects::UnboundVertices>());
+		list.push_back(std::make_unique<defects::UnconnectedSubmeshes>());
 		list.push_back(std::make_unique<defects::UnpatchedHoles>());
 	}
 
@@ -66,6 +69,8 @@ public:
 		condition(NULL_FACES, NullFaces)
 		else
 		condition(UNBOUND_VERTICES, UnboundVertices)
+		else
+		condition(UNCONNECTED_SUBMESHES, UnconnectedSubmeshes)
 		else
 		condition(UNPATCHED_HOLES, UnpatchedHoles)
 		else

@@ -53,7 +53,7 @@ class MeshAuxiliaryData
 	Eigen::MatrixXd mean_curvatures;
 	Eigen::VectorXd mean_curvature_magnitudes;
 	std::vector<std::vector<Eigen::Index>> connected_submeshes;
-	std::unordered_map<Eigen::Index, size_t> connected_submesh_roots;
+	std::unordered_map<Eigen::Index, Eigen::Index> connected_submesh_roots;
 
 public:
 	void reset();
@@ -111,5 +111,5 @@ public:
 	const Eigen::MatrixXd& get_mean_curvatures() const { return aux.get_mean_curvatures(primary); }
 	const Eigen::VectorXd& get_mean_curvature_magnitudes() const { return aux.get_mean_curvature_magnitudes(primary); }
 	const std::vector<std::vector<Eigen::Index>>& get_connected_submeshes() const { return aux.get_connected_submeshes(primary); }
-	const std::unordered_map<Eigen::Index, size_t>& get_connected_submesh_roots() const { return aux.get_connected_submesh_roots(primary); }
+	const std::unordered_map<Eigen::Index, Eigen::Index>& get_connected_submesh_roots() const { return aux.get_connected_submesh_roots(primary); }
 };

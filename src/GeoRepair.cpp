@@ -87,6 +87,7 @@ private:
 	void render_non_manifold_edges_gui();
 	void render_null_faces_gui();
 	void render_unbound_vertices_gui();
+	void render_unconnected_submeshes_gui();
 	void render_unpatched_holes_gui();
 	
 	void render_defect_base_buttons(Defect defect, void(GeoRepair::*detect_success)());
@@ -102,6 +103,7 @@ private:
 	void non_manifold_edges_detect_success();
 	void null_faces_detect_success();
 	void unbound_vertices_detect_success();
+	void unconnected_submeshes_detect_success();
 	void unpatched_holes_detect_success();
 
 	void reset_colors();
@@ -189,7 +191,7 @@ void GeoRepair::init()
 
 
 			// TODO remove
-			load_mesh("../assets/hole.obj");
+			load_mesh("../assets/unconnected submeshes.obj");
 
 
 
@@ -242,6 +244,7 @@ void GeoRepair::render_gui()
 		render_non_manifold_edges_gui();
 		render_null_faces_gui();
 		render_unbound_vertices_gui();
+		render_unconnected_submeshes_gui();
 		render_unpatched_holes_gui();
 		message_no_detection();
 		ImGui::End();
@@ -733,6 +736,56 @@ void GeoRepair::render_unbound_vertices_gui()
 	render_defect_gui_footer(Defect::UNBOUND_VERTICES);
 }
 
+void GeoRepair::render_unconnected_submeshes_gui()
+{
+	render_defect_gui_header(Defect::UNCONNECTED_SUBMESHES);
+	if (ImGui::CollapsingHeader("Unconnected Submeshes"))
+	{
+		opened_header = Defect::UNCONNECTED_SUBMESHES;
+		auto& unconnected_submeshes = defect_list.get<Defect::UNCONNECTED_SUBMESHES>();
+		bool no_unconnected = true;
+
+		ImGui::BeginDisabled(unconnected_submeshes.in_detected_state());
+		if (ImGui::Button("Detect"))
+		{
+			reset_colors();
+			glfwSetCursor(viewer.window, wait_cursor);
+			unconnected_submeshes.detect(mesh);
+			glfwSetCursor(viewer.window, arrow_cursor);
+			if (unconnected_submeshes.in_detected_state())
+			{
+				no_unconnected = false;
+				unconnected_submeshes_detect_success();
+			}
+			else
+				no_detection = true;
+		}
+		ImGui::EndDisabled();
+		ImGui::SameLine();
+		ImGui::BeginDisabled(!unconnected_submeshes.in_detected_state());
+		if (ImGui::Button("Reset"))
+		{
+			glfwSetCursor(viewer.window, wait_cursor);
+			unconnected_submeshes.reset();
+			glfwSetCursor(viewer.window, arrow_cursor);
+			reset_colors();
+		}
+		ImGui::EndDisabled();
+
+		if (!no_unconnected)
+			ImGui::OpenPopup("Info##existsunconnected");
+		if (ImGui::BeginPopupModal("Info##existsunconnected", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+		{
+			ImGui::Text("%d unconnected submeshes detected.", unconnected_submeshes.get_submeshes().size());
+			ImGui::Separator();
+			if (ImGui::Button("OK"))
+				ImGui::CloseCurrentPopup();
+			ImGui::EndPopup();
+		}
+	}
+	render_defect_gui_footer(Defect::UNCONNECTED_SUBMESHES);
+}
+
 void GeoRepair::render_unpatched_holes_gui()
 {
 	render_defect_gui_header(Defect::UNPATCHED_HOLES);
@@ -974,7 +1027,7 @@ void GeoRepair::noise_smoothing_detect_success()
 	const auto& vertices = mesh.get_vertices();
 	const auto& noisy_vertices = defect_list.get<Defect::NOISE_SMOOTHING>().get_noisy_vertices();
 	auto& vertex_colors = mesh.get_vertex_colors();
-	vertex_colors.resize(vertices.rows(), 3);
+	vertex_colors.resize(vertices.rows(), Eigen::NoChange);
 	Eigen::Index nv = 0;
 	for (Eigen::Index i = 0; i < vertex_colors.rows(); ++i)
 	{
@@ -1004,11 +1057,11 @@ void GeoRepair::non_manifold_edges_detect_success()
 	double max_surplus = defect.get_max_edge_count() - 3;
 	
 	auto& E1 = mesh.get_edges_1();
-	E1.resize(edges.size(), 3);
+	E1.resize(edges.size(), Eigen::NoChange);
 	auto& E2 = mesh.get_edges_2();
-	E2.resize(edges.size(), 3);
+	E2.resize(edges.size(), Eigen::NoChange);
 	auto& C = mesh.get_edge_colors();
-	C.resize(edges.size(), 3);
+	C.resize(edges.size(), Eigen::NoChange);
 	
 	Eigen::Index i = 0;
 	for (auto iter = edges.begin(); iter != edges.end(); ++iter)
@@ -1042,9 +1095,9 @@ void GeoRepair::null_faces_detect_success()
 
 	const auto& indices = defect_list.get<Defect::NULL_FACES>().get_null_face_indices();
 	auto& E1 = mesh.get_edges_1();
-	E1.resize(3 * indices.size(), 3);
+	E1.resize(3 * indices.size(), Eigen::NoChange);
 	auto& E2 = mesh.get_edges_2();
-	E2.resize(3 * indices.size(), 3);
+	E2.resize(3 * indices.size(), Eigen::NoChange);
 	auto& EC = mesh.get_edge_colors();
 	EC = colors::edge::defective.replicate(3 * indices.size(), 1);
 	for (Eigen::Index i = 0; i < indices.size(); ++i)
@@ -1094,6 +1147,28 @@ void GeoRepair::unbound_vertices_detect_success()
 	edge_data().clear_edges();
 }
 
+void GeoRepair::unconnected_submeshes_detect_success()
+{
+	auto& face_colors = mesh.get_face_colors();
+	const auto& faces = mesh.get_faces();
+	face_colors.resize(faces.rows(), Eigen::NoChange);
+	const auto& submeshes = defect_list.get<Defect::UNCONNECTED_SUBMESHES>().get_submeshes();
+
+	assert(submeshes.size() > 1);
+	for (Eigen::Index i = 0; i < submeshes.size(); ++i)
+	{
+		Eigen::RowVector3d color = colors::face::defective + i / double(submeshes.size() - 1) * (colors::face::defective_alt - colors::face::defective);
+		for (Eigen::Index f : submeshes[i])
+			face_colors.row(f) = color;
+	}
+
+	mesh_data().set_colors(face_colors);
+	mesh.reset_vertex_colors();
+	mesh_data().set_points(mesh.get_vertices(), mesh.get_vertex_colors());
+	mesh.reset_edge_colors();
+	edge_data().clear_edges();
+}
+
 void GeoRepair::unpatched_holes_detect_success()
 {
 	edge_data().clear_edges();
@@ -1104,9 +1179,9 @@ void GeoRepair::unpatched_holes_detect_success()
 		num_boundary_vertices += boundary.size();
 
 	auto& E1 = mesh.get_edges_1();
-	E1.resize(num_boundary_vertices, 3);
+	E1.resize(num_boundary_vertices, Eigen::NoChange);
 	auto& E2 = mesh.get_edges_2();
-	E2.resize(num_boundary_vertices, 3);
+	E2.resize(num_boundary_vertices, Eigen::NoChange);
 	auto& EC = mesh.get_edge_colors();
 	EC = colors::edge::defective.replicate(num_boundary_vertices, 1);
 	

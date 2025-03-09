@@ -210,7 +210,7 @@ void MeshAuxiliaryData::compute_connected_submeshes(const MeshPrimaryData& data)
 	connected_submesh_roots.clear();
 	const auto& fadj = get_fadj(data);
 	std::vector<bool> visited_faces(data.F.rows(), false);
-	size_t j = 0;
+	Eigen::Index j = 0;
 	for (Eigen::Index i = 0; i < visited_faces.size(); ++i)
 	{
 		if (!visited_faces[i])
