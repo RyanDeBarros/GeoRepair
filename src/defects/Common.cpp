@@ -5,7 +5,8 @@
 void defects::DefectBase::detect(const Mesh& mesh)
 {
 	reset();
-	_detect(mesh);
+	if (mesh.get_vertices().size())
+		_detect(mesh);
 }
 
 void defects::DefectBase::repair(Mesh& mesh)

@@ -1,7 +1,5 @@
 #include "InvertedNormals.h"
 
-// TODO test on meshes with multiple connected submeshes
-
 void defects::InvertedNormals::_detect(const Mesh& mesh)
 {
 	const auto& faces = mesh.get_faces();

@@ -5,9 +5,6 @@
 
 #include "defects/Defects.h"
 
-// TODO include research papers in README.md
-
-// TODO later add settings for these colors and point/edge sizes
 namespace colors
 {
 	namespace style
@@ -53,6 +50,7 @@ class GeoRepair
 
 	GLFWcursor* wait_cursor = nullptr;
 	GLFWcursor* arrow_cursor = nullptr;
+	bool was_settings_window_open = false;
 
 public:
 	void run();
@@ -77,6 +75,7 @@ private:
 
 	int opened_header = -1;
 	void render_menu_gui();
+	void render_settings_popup();
 	void render_header_gui();
 	void render_degenerate_faces_gui();
 	void render_degenerate_vertex_patch_gui();
@@ -188,13 +187,6 @@ void GeoRepair::init()
 			glfwSetDropCallback(viewer.window, &path_drop_callback);
 			wait_cursor = glfwCreateStandardCursor(GLFW_NOT_ALLOWED_CURSOR);
 			arrow_cursor = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
-
-
-			// TODO remove
-			load_mesh("../assets/unconnected submeshes.obj");
-
-
-
 			return false;
 		};
 	mesh_data().point_size = 8.0f;
@@ -253,6 +245,8 @@ void GeoRepair::render_gui()
 
 void GeoRepair::refresh_mesh()
 {
+	if (mesh.get_vertices().size() == 0)
+		return;
 	mesh_data().clear();
 	mesh_data().set_mesh(mesh.get_vertices(), mesh.get_faces());
 	mesh_data().set_points(mesh.get_vertices(), mesh.get_vertex_colors());
@@ -293,6 +287,8 @@ void GeoRepair::restore_visualisation()
 
 void GeoRepair::render_menu_gui()
 {
+	bool show_info_popup = false;
+	bool show_customization_popup = false;
 	if (ImGui::BeginMainMenuBar())
 	{
 		if (ImGui::BeginMenu("File"))
@@ -302,7 +298,12 @@ void GeoRepair::render_menu_gui()
 			if (ImGui::MenuItem("Save mesh", "Ctrl+S"))
 				save_mesh();
 			if (ImGui::MenuItem("Info"))
-				ImGui::OpenPopup("Info");
+				show_info_popup = true;
+			if (ImGui::MenuItem("Customization"))
+				show_customization_popup = true;
+			if (ImGui::IsItemHovered())
+				ImGui::SetTooltip("Note that color changes may only update upon loading a new mesh or detecting/repairing the current mesh.");
+
 			ImGui::EndMenu();
 		}
 		if (ImGui::BeginMenu("Edit"))
@@ -321,14 +322,81 @@ void GeoRepair::render_menu_gui()
 		ImGui::EndMainMenuBar();
 	}
 
-	if (ImGui::BeginPopupModal("Info", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+	if (show_info_popup)
+		ImGui::OpenPopup("Info##popup");
+	if (ImGui::BeginPopupModal("Info##popup", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 	{
 		ImGui::Text("GeoRepair detects and repairs common mesh defects.");
-		ImGui::Text("Note that triangulation happens automatically, faceless edges are discarded, and no information about texture coordinates, materials, etc. will be retained."); // TODO if this is changed, update disclaimer
+		ImGui::Text("Note that triangulation happens automatically, faceless edges are discarded, and no information about texture coordinates, materials, etc. will be retained.");
 		if (ImGui::Button("OK"))
 			ImGui::CloseCurrentPopup();
 		ImGui::EndPopup();
 	}
+	if (show_customization_popup)
+	{
+		ImGui::OpenPopup("Customization##popup");
+		ImGui::SetNextWindowSize(ImVec2(500, 500));
+	}
+	if (ImGui::BeginPopupModal("Customization##popup", nullptr))
+	{
+		render_settings_popup();
+		// center button
+		float size = ImGui::CalcTextSize("OK").x + ImGui::GetStyle().FramePadding.x * 2.0f;
+		float avail = ImGui::GetContentRegionAvail().x;
+		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (avail - size) * 0.5f);
+		if (ImGui::Button("OK") || glfwGetKey(viewer.window, GLFW_KEY_ENTER) == GLFW_PRESS)
+			ImGui::CloseCurrentPopup();
+		ImGui::EndPopup();
+	}
+	bool is_settings_window_open = ImGui::IsPopupOpen("Customization##popup");
+	if (!is_settings_window_open && was_settings_window_open)
+		refresh_mesh();
+	was_settings_window_open = is_settings_window_open;
+}
+
+void GeoRepair::render_settings_popup()
+{
+#define color_picker_3(name, eigen_row_vector)\
+{\
+	float c[3] = { (float)eigen_row_vector(0), (float)eigen_row_vector(1), (float)eigen_row_vector(2) };\
+	if (ImGui::ColorPicker3(name, c))\
+		eigen_row_vector = Eigen::RowVector3d((double)c[0], (double)c[1], (double)c[2]);\
+}
+	if (ImGui::CollapsingHeader("UI Style"))
+	{
+		ImGui::ColorPicker4("Detected Highlight", &colors::style::detected.x);
+	}
+	if (ImGui::CollapsingHeader("Vertices"))
+	{
+		float pt_size = mesh_data().point_size;
+		if (ImGui::InputFloat("Point Size", &pt_size) && pt_size > 0.0f)
+			mesh_data().point_size = pt_size;
+		ImGui::Separator();
+		color_picker_3("Neutral", colors::vertex::neutral);
+		ImGui::Separator();
+		color_picker_3("Defective (high)", colors::vertex::defective);
+		ImGui::Separator();
+		color_picker_3("Defective (low)", colors::vertex::defective_low);
+	}
+	if (ImGui::CollapsingHeader("Faces"))
+	{
+		color_picker_3("Neutral", colors::face::neutral);
+		ImGui::Separator();
+		color_picker_3("Defective", colors::face::defective);
+		ImGui::Separator();
+		color_picker_3("Defective (alt)", colors::face::defective_alt);
+	}
+	if (ImGui::CollapsingHeader("Edges"))
+	{
+		float ln_width = edge_data().line_width;
+		if (ImGui::InputFloat("Defective Edge Width", &ln_width) && ln_width > 0.0f)
+			edge_data().line_width = ln_width;
+		ImGui::Separator();
+		color_picker_3("Defective", colors::edge::defective);
+		ImGui::Separator();
+		color_picker_3("Defective (alt)", colors::edge::defective_alt);
+	}
+#undef color_picker_3
 }
 
 void GeoRepair::render_header_gui()
@@ -815,6 +883,10 @@ void GeoRepair::render_unpatched_holes_gui()
 			ImGui::InputInt("Ear Cycle", &unpatched_holes.ear_clipping_ear_cycle);
 			if (ImGui::IsItemHovered())
 				ImGui::SetTooltip("Sets how ears are traversed, which determines the style of the triangulation. Note that some cycles may generate sliver triangles.");
+
+			ImGui::Checkbox("Flatten", &unpatched_holes.flatten);
+			if (ImGui::IsItemHovered())
+				ImGui::SetTooltip("If set to true, will attempt to find the \"flattest\" triangulation. Note that this may be an expensive computation.");
 		}
 
 		ImGui::SetNextItemWidth(200);
@@ -829,7 +901,7 @@ void GeoRepair::render_unpatched_holes_gui()
 
 void GeoRepair::render_defect_base_buttons(Defect defect, void(GeoRepair::*detect_success)())
 {
-	ImGui::BeginDisabled(defect_list[defect].in_detected_state()); // TODO later, in_detected_state() will need to check for the particular selection of the mesh
+	ImGui::BeginDisabled(defect_list[defect].in_detected_state());
 	if (ImGui::Button("Detect"))
 	{
 		reset_colors();

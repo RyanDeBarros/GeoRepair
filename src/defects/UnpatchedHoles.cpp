@@ -2,8 +2,6 @@
 
 #include "../EarClipping.h"
 
-// TODO split concave n-gons into convex sub-n-gons to respect concavities (not necessary for ear clipping though)
-
 void defects::UnpatchedHoles::_detect(const Mesh& mesh)
 {
 	boundary_vertices = mesh.get_boundary_loops();
@@ -206,5 +204,5 @@ void defects::UnpatchedHoles::repair_pie(Mesh& mesh, const std::vector<Eigen::In
 
 void defects::UnpatchedHoles::repair_ear_clipping(Mesh& mesh, const std::vector<Eigen::Index>& boundary, bool increasing)
 {
-	ear_clipping(boundary, mesh.get_vertices(), add_faces, increasing, ear_clipping_ear_cycle, reference_point_offset);
+	ear_clipping(boundary, mesh.get_vertices(), add_faces, increasing, ear_clipping_ear_cycle, reference_point_offset, flatten);
 }

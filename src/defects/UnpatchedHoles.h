@@ -38,6 +38,7 @@ namespace defects
 
 		int reference_point_offset = 0;
 		int ear_clipping_ear_cycle = 0; // only for EAR_CLIPPING
+		bool flatten = false; // only for EAR_CLIPPING
 
 		const decltype(boundary_vertices)& get_boundary_vertices() const { return boundary_vertices; }
 	};

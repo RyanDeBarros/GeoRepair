@@ -210,7 +210,21 @@ static void update_adjacent(std::shared_ptr<Node>& adj, EarClippingData& data)
 	}
 };
 
-static void remove_ear(EarClippingData& data, std::shared_ptr<Node> remove)
+static void recompute_normal(EarClippingData& data)
+{
+	std::shared_ptr<Node> indexer = data.head_polygon;
+	data.normal.setZero();
+	do
+	{
+		auto triangle = indexer->triangle(data);
+		data.normal += (triangle.root - triangle.next).cross(triangle.root + triangle.next);
+
+		indexer = indexer->next_vertex;
+	} while (indexer != data.head_polygon);
+	data.normal.normalize();
+}
+
+static void remove_ear(EarClippingData& data, std::shared_ptr<Node> remove, bool flatten)
 {
 	assert(remove->is_ear);
 	// remove from polygon
@@ -298,13 +312,15 @@ static void remove_ear(EarClippingData& data, std::shared_ptr<Node> remove)
 
 	// update categorization of adjacent vertices
 	update_adjacent(remove->next_vertex, data);
-	update_adjacent(remove->prev_vertex, data);	
+	update_adjacent(remove->prev_vertex, data);
+	if (flatten)
+		recompute_normal(data);
 	remove->next_vertex = nullptr;
 	remove->prev_vertex = nullptr;
 	--data.size;
 }
 
-void ear_clipping(const std::vector<Eigen::Index>& boundary, const Eigen::MatrixXd& vertices, std::vector<Eigen::RowVector3i>& add_faces, bool increasing, int ear_cycle, int reference_point_offset)
+void ear_clipping(const std::vector<Eigen::Index>& boundary, const Eigen::MatrixXd& vertices, std::vector<Eigen::RowVector3i>& add_faces, bool increasing, int ear_cycle, int reference_point_offset, bool flatten)
 {
 	if (boundary.size() == 3)
 	{
@@ -321,18 +337,9 @@ void ear_clipping(const std::vector<Eigen::Index>& boundary, const Eigen::Matrix
 	for (int i = 0; i < boundary.size(); ++i)
 		append_vertex(data, boundary[pos_mod(i + reference_point_offset, boundary.size())]);
 
-	// compute polygonal normal
+	recompute_normal(data);
+
 	std::shared_ptr<Node> indexer = data.head_polygon;
-	data.normal.setZero();
-	do
-	{
-		auto triangle = indexer->triangle(data);
-		data.normal += (triangle.root - triangle.next).cross(triangle.root + triangle.next);
-
-		indexer = indexer->next_vertex;
-	} while (indexer != data.head_polygon);
-	data.normal.normalize();
-
 	// categorize initial vertices
 	do
 	{
@@ -362,7 +369,7 @@ void ear_clipping(const std::vector<Eigen::Index>& boundary, const Eigen::Matrix
 		{
 			Eigen::RowVector3i face(data.head_ear->prev_vertex->v, data.head_ear->v, data.head_ear->next_vertex->v);
 			add_faces.push_back(increasing ? face : face.reverse());
-			remove_ear(data, data.head_ear);
+			remove_ear(data, data.head_ear, flatten);
 		}
 	}
 	else if (ear_cycle > 0)
@@ -375,7 +382,7 @@ void ear_clipping(const std::vector<Eigen::Index>& boundary, const Eigen::Matrix
 				next_indexer = next_indexer->next_ear;
 			Eigen::RowVector3i face(indexer->prev_vertex->v, indexer->v, indexer->next_vertex->v);
 			add_faces.push_back(increasing ? face : face.reverse());
-			remove_ear(data, indexer);
+			remove_ear(data, indexer, flatten);
 			indexer = next_indexer;
 		}
 	}
@@ -389,7 +396,7 @@ void ear_clipping(const std::vector<Eigen::Index>& boundary, const Eigen::Matrix
 				prev_indexer = prev_indexer->prev_ear;
 			Eigen::RowVector3i face(indexer->prev_vertex->v, indexer->v, indexer->next_vertex->v);
 			add_faces.push_back(increasing ? face : face.reverse());
-			remove_ear(data, indexer);
+			remove_ear(data, indexer, flatten);
 			indexer = prev_indexer;
 		}
 	}

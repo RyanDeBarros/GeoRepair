@@ -12,7 +12,6 @@ bool Mesh::load(const char* filename)
 {
 	data->primary.mesh_filename = filename;
 
-	// TODO eventually, add support for texture coordinates, etc., for specific file extensions
 	if (!igl::read_triangle_mesh(filename, data->primary.V, data->primary.F))
 		return false;
 	reset_vertex_colors();
@@ -77,9 +76,9 @@ void Mesh::reset_face_colors()
 
 void Mesh::reset_edge_colors()
 {
-	data->primary.E1.resize(0, 0);
-	data->primary.E2.resize(0, 0);
-	data->primary.EC.resize(0, 0);
+	data->primary.E1.resize(0, 3);
+	data->primary.E2.resize(0, 3);
+	data->primary.EC.resize(0, 3);
 }
 
 static void traverse_submesh_dfs(const Eigen::SparseMatrix<int>& fadj, Eigen::Index start_face, std::vector<bool>& visited_faces, const std::function<void(Eigen::Index face1, Eigen::Index face2)>& adj_process)
