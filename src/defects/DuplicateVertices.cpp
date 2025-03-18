@@ -50,10 +50,10 @@ void remove_duplicate_vertices(Mesh& mesh, EquivalenceClasses& vertex_clusters)
 		// Replace root with mean point
 		vertices.row(root) = mean;
 	}
-	// Remove marked vertices
 	remove_rows(vertices, remove_vertices, false);
-	// Remove marked faces
 	remove_rows(faces, remove_faces, false);
-	// Re-index faces
 	reindex_faces(faces, remove_vertices);
+
+	mesh.reset_vertex_colors();
+	mesh.reset_face_colors();
 }

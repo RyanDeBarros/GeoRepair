@@ -91,6 +91,7 @@ void defects::DuplicateFaces::_detect(const Mesh& mesh)
 void defects::DuplicateFaces::_repair(Mesh& mesh)
 {
 	remove_rows(mesh.get_faces(), duplicate_face_indices, maximum_block_height, true);
+	mesh.reset_face_colors();
 }
 
 void defects::DuplicateFaces::reset()

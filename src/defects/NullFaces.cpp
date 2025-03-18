@@ -14,6 +14,7 @@ void defects::NullFaces::_detect(const Mesh& mesh)
 void defects::NullFaces::_repair(Mesh& mesh)
 {
 	remove_rows(mesh.get_faces(), null_face_indices, maximum_block_height, true);
+	mesh.reset_face_colors();
 }
 
 void defects::NullFaces::reset()

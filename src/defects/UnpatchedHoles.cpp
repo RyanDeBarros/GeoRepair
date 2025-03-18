@@ -105,6 +105,9 @@ void defects::UnpatchedHoles::_repair(Mesh& mesh)
 			new_vertices.row(vertices.rows() + i) = add_vertices[i];
 		std::swap(vertices, new_vertices);
 	}
+
+	mesh.reset_vertex_colors();
+	mesh.reset_face_colors();
 }
 
 void defects::UnpatchedHoles::reset()

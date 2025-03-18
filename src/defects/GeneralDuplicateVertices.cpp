@@ -10,7 +10,6 @@ void defects::GeneralDuplicateVertices::_detect(const Mesh& mesh)
 		return;
 	}
 
-	// TODO a bit slow. try to optimize. might be a case of DEBUG vs RELEASE mode.
 	std::unordered_map<Eigen::Vector3i, std::vector<Eigen::Index>, EigenMatrixHash> voxel_grid;
 	const double inv_tolerance = 1.0 / tolerance;
 	const double sqrd_tolerance = tolerance * tolerance;
