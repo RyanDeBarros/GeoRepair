@@ -5,6 +5,7 @@
 #include "DuplicateFaces.h"
 #include "GeneralDuplicateVertices.h"
 #include "InvertedNormals.h"
+#include "IsolatedVertices.h"
 #include "NoiseSmoothing.h"
 #include "NonManifoldEdges.h"
 #include "NullFaces.h"
@@ -19,6 +20,7 @@ enum Defect
 	DUPLICATE_FACES,
 	GENERAL_DUPLICATE_VERTICES,
 	INVERTED_NORMALS,
+	ISOLATED_VERTICES,
 	NOISE_SMOOTHING,
 	NON_MANIFOLD_EDGES,
 	NULL_FACES,
@@ -39,6 +41,7 @@ public:
 		list.push_back(std::make_unique<defects::DuplicateFaces>());
 		list.push_back(std::make_unique<defects::GeneralDuplicateVertices>());
 		list.push_back(std::make_unique<defects::InvertedNormals>());
+		list.push_back(std::make_unique<defects::IsolatedVertices>());
 		list.push_back(std::make_unique<defects::NoiseSmoothing>());
 		list.push_back(std::make_unique<defects::NonManifoldEdges>());
 		list.push_back(std::make_unique<defects::NullFaces>());
@@ -61,6 +64,8 @@ public:
 		condition(GENERAL_DUPLICATE_VERTICES, GeneralDuplicateVertices)
 		else
 		condition(INVERTED_NORMALS, InvertedNormals)
+		else
+		condition(ISOLATED_VERTICES, IsolatedVertices)
 		else
 		condition(NOISE_SMOOTHING, NoiseSmoothing)
 		else

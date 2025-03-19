@@ -82,6 +82,7 @@ private:
 	void render_duplicate_faces_gui();
 	void render_general_duplicate_vertices_gui();
 	void render_inverted_normals_gui();
+	void render_isolated_vertices_gui();
 	void render_noise_smoothing_gui();
 	void render_non_manifold_edges_gui();
 	void render_null_faces_gui();
@@ -98,6 +99,7 @@ private:
 	void duplicate_faces_detect_success();
 	void general_duplicate_vertices_detect_success();
 	void inverted_normals_detect_success();
+	void isolated_vertices_detect_success();
 	void noise_smoothing_detect_success();
 	void non_manifold_edges_detect_success();
 	void null_faces_detect_success();
@@ -232,6 +234,7 @@ void GeoRepair::render_gui()
 		render_duplicate_faces_gui();
 		render_general_duplicate_vertices_gui();
 		render_inverted_normals_gui();
+		render_isolated_vertices_gui();
 		render_noise_smoothing_gui();
 		render_non_manifold_edges_gui();
 		render_null_faces_gui();
@@ -578,6 +581,18 @@ void GeoRepair::render_inverted_normals_gui()
 		render_defect_base_buttons(Defect::INVERTED_NORMALS, &GeoRepair::inverted_normals_detect_success);
 	}
 	render_defect_gui_footer(Defect::INVERTED_NORMALS);
+}
+
+void GeoRepair::render_isolated_vertices_gui()
+{
+	render_defect_gui_header(Defect::ISOLATED_VERTICES);
+	if (ImGui::CollapsingHeader("Isolated Vertices"))
+	{
+		opened_header = Defect::ISOLATED_VERTICES;
+		
+		render_defect_base_buttons(Defect::ISOLATED_VERTICES, &GeoRepair::isolated_vertices_detect_success);
+	}
+	render_defect_gui_footer(Defect::ISOLATED_VERTICES);
 }
 
 void GeoRepair::render_noise_smoothing_gui()
@@ -1090,6 +1105,30 @@ void GeoRepair::inverted_normals_detect_success()
 	mesh_data().set_colors(face_colors);
 	mesh.reset_vertex_colors();
 	mesh_data().set_points(mesh.get_vertices(), mesh.get_vertex_colors());
+	mesh.reset_edge_colors();
+	edge_data().clear_edges();
+}
+
+void GeoRepair::isolated_vertices_detect_success()
+{
+	const auto& vertices = mesh.get_vertices();
+	const auto& isolated_vertices = defect_list.get<Defect::ISOLATED_VERTICES>().get_isolated_vertices();
+	auto& vertex_colors = mesh.get_vertex_colors();
+	vertex_colors.resize(vertices.rows(), Eigen::NoChange);
+	Eigen::Index iv = 0;
+	for (Eigen::Index i = 0; i < vertex_colors.rows(); ++i)
+	{
+		if (iv < isolated_vertices.size() && isolated_vertices[iv] == i)
+		{
+			vertex_colors.row(i) = colors::vertex::defective;
+			++iv;
+		}
+		else
+			vertex_colors.row(i) = colors::vertex::neutral;
+	}
+	mesh_data().set_points(vertices, vertex_colors);
+	mesh.reset_face_colors();
+	mesh_data().set_colors(mesh.get_face_colors());
 	mesh.reset_edge_colors();
 	edge_data().clear_edges();
 }

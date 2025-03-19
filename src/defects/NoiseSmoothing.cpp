@@ -248,7 +248,7 @@ static void bilateral_smoothing(Mesh& mesh, const std::vector<Eigen::Index>& noi
 			sum += w * h;
 			normalizer += w;
 		}
-		new_vertices[i] = vertex + smoothing_factor * normal * (sum / normalizer);
+		new_vertices[i] = vertex - smoothing_factor * normal * (sum / normalizer);
 	}
 
 	for (size_t i = 0; i < noisy_vertices.size(); ++i)

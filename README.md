@@ -4,6 +4,7 @@ My term project for COMP 438: Geometric Modelling and Processing.
 GeoRepair is an application using libigl under the hood to detect and repair common mesh defects like:
 * Duplicate faces
 * Duplicate vertices
+* Isolated vertices
 * Null faces
 * Degenerate faces
 * Unpatched holes
