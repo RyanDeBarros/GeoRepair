@@ -121,10 +121,10 @@ void defects::NoiseSmoothing::detect_feature_sensitive(const Mesh& mesh)
 
 	// If residual is high:
 	//     - if magnitude is low: likely noise
-	//     - if magnitude is high: likely feature
+	//     - if magnitude is high: likely sharp feature
 	// If residual is low:
 	//     - if magnitude is low: likely no noise
-	//     - if magnitude is high: likely sharp feature
+	//     - if magnitude is high: likely feature
 	if (ignore_boundaries)
 	{
 		const auto& boundary_vertices = mesh.get_boundary_vertices();

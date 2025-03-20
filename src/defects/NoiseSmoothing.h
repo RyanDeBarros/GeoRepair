@@ -31,7 +31,7 @@ namespace defects
 			TAUBIN,
 			DESBRUN,
 			BILATERAL
-		} smoothing_method = SmoothingMethod::TAUBIN;
+		} smoothing_method = SmoothingMethod::BILATERAL;
 
 		int laplacian_iterations = 3; // must be > 0 - only used for LAPLACIAN
 		float laplacian_smoothing_factor = 0.4f; // must be between 0.0 and 1.0 - only used for LAPLACIAN

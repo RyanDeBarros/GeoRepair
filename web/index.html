@@ -3,15 +3,237 @@
     <head lang="en">
         <meta charset="utf-8">
         <title>GeoRepair</title>
+        <style>
+            .imgcontainer {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                align-items: center;
+                margin: 20px;
+            }
+            img {
+                max-width: 40%;
+                padding: 5px;
+            }
+            table {
+                margin: 20px;
+                padding: 20px;
+                border-collapse: collapse;
+            }
+            td {
+                border: 1px solid black;
+                padding: 8px;
+                text-align: center;
+            }
+            li {
+                text-align: left;
+            }
+        </style>
     </head>
-    <body>
+    <body style="background-color: #eeeebb;">
         <h1 style="text-align: center;">GeoRepair</h1>
+        <h4 style="text-align: center;">detects and repairs mesh defects</h4>
         <div>
-            <h2>Overview</h2>
+            <h2>Quick links</h2>
+            <ul>
+                <li><a href="#mainviews">Main views</a></li>
+                <li><a href="#degeneratefaces">Degenerate faces</a></li>
+                <li><a href="#degeneratevertexpatches">Degenerate vertex patches</a></li>
+                <li><a href="#duplicatefaces">Duplicate faces</a></li>
+                <li><a href="#duplicatevertices">Duplicate vertices</a></li>
+                <li><a href="#invertednormals">Inverted normals</a></li>
+                <li><a href="#isolatedvertices">Isolated vertices</a></li>
+                <li><a href="#noisesmoothing">Noise smoothing</a></li>
+                <li><a href="#nonmanifoldedges">Non-manifold edges</a></li>
+                <li><a href="#nullfaces">Null faces</a></li>
+                <li><a href="#unboundvertices">Unbound vertices</a></li>
+                <li><a href="#unconnectedsubmeshes">Unconnected submeshes</a></li>
+                <li><a href="#unpatchedholes">Unpatched holes</a></li>
+            </ul>
         </div>
         <div>
             <h2>Features</h2>
-            
+            <div style="background-color: #bbddff; text-align: center; padding: 10px;">
+                <h3 id="mainviews" style="text-align: left; margin: 0;">Main views</h3>
+                <div class="imgcontainer">
+                    <img src="images/startup.png">
+                    <img src="images/main view.png">
+                </div>
+                The startup screen of GeoRepair (left) and a mesh loaded into the program (right).
+                <div class="imgcontainer">
+                    <img src="images/file menu.png">
+                    <img src="images/edit menu.png">
+                    <img src="images/customization.png">
+                </div>
+                The file menu (top-left) allows the user to load/save a mesh, view the info popup, and open the customization settings (bottom). The customization settings lets the user customize all colors used by in the mesh, as well as vertex sizes and edge lengths. The edit menu (top-right) allows the user to undo (or Ctrl+Z), redo (or Ctrl+Shft+z), clear visualisation (clear all markings made by the detection algorithms), or restore the visualisation.
+            </div>
+            <div style="background-color: #bbffdd; text-align: center; padding: 10px;">
+                <h3 id="degeneratefaces" style="text-align: left; margin: 0;">Degenerate faces</h3>
+                <div class="imgcontainer">
+                    <img src="images/degenerate faces/original.png">
+                    <img src="images/degenerate faces/detected.png">
+                    <img src="images/degenerate faces/repaired.png">
+                </div>
+                The original mesh (top-left), detected vertices responsible for degenerate faces (top-right), and the repaired mesh (bottom). A degenerate face has at least 2 vertices whose distance is within the threshold value. If the "ignore normals" option is unchecked, then two faces that are made up of the same vertices but have different winding orders are considered separate faces and won't be considered as duplicate faces. Otherwise, all duplicate faces minus 1 are considered degenerate faces - there will be one face remaining but all other duplicates with that face are removed. 
+            </div>
+            <div style="background-color: #bbddff; text-align: center; padding: 10px;">
+                <h3 id="degeneratevertexpatches" style="text-align: left; margin: 0;">Degenerate vertex patches</h3>
+                <div class="imgcontainer">
+                    <img src="images/degenerate vertex patches/original.png">
+                    <img src="images/degenerate vertex patches/detected.png">
+                    <img src="images/degenerate vertex patches/repaired.png">
+                </div>
+                The original mesh (top-left), detected vertices responsible for degenerate vertex patches (top-right), and the repaired mesh (bottom). A degenerate vertex patch is a set of vertices all within the same connected submesh, where any one vertex is within the threshold value of some other vertex in the set. In other words, they are duplicate vertices that lie in the same connected submesh.
+            </div>
+            <div style="background-color: #bbffdd; text-align: center; padding: 10px;">
+                <h3 id="duplicatefaces" style="text-align: left; margin: 0;">Duplicate faces</h3>
+                <div class="imgcontainer">
+                    <img src="images/duplicate faces/original.png">
+                    <img src="images/duplicate faces/detected.png">
+                    <img src="images/duplicate faces/repaired.png">
+                    <img src="images/duplicate faces/result.png">
+                </div>
+                The original mesh (top-left), detected duplicate faces (top-right), and the repaired mesh (bottom-left). Though the repaired mesh looks the same as the original mesh, detecting for duplicate faces on the repaired mesh yields (bottom-right), indicating no defects were found. If the "ignore normals" option is unchecked, then two faces with the same vertices but with different winding orders are not considered duplicates.
+            </div>
+            <div style="background-color: #bbddff; text-align: center; padding: 10px;">
+                <h3 id="duplicatevertices" style="text-align: left; margin: 0;">Duplicate vertices</h3>
+                <div class="imgcontainer">
+                    <img src="images/duplicate vertices/original.png">
+                    <img src="images/duplicate vertices/detected.png">
+                    <img src="images/duplicate vertices/repaired.png">
+                </div>
+                The original mesh (top-left), detected duplicate vertices within the tolerance threshold (top-right), and the repaired mesh (bottom).
+            </div>
+            <div style="background-color: #bbffdd; text-align: center; padding: 10px;">
+                <h3 id="invertednormals" style="text-align: left; margin: 0;">Inverted normals</h3>
+                <div class="imgcontainer">
+                    <img src="images/inverted normals/original.png">
+                    <img src="images/inverted normals/flip all.png">
+                    <img src="images/inverted normals/detected.png">
+                    <img src="images/inverted normals/repaired.png">
+                </div>
+                The original mesh (top-left), detected inverted normals (bottom-left), and the repaired mesh (bottom-right). Note that the visualisation is maintained until cleared, but the faces are all clearly correctly oriented. The "flip all" button flips all normals in the mesh (top-right).
+            </div>
+            <div style="background-color: #bbddff; text-align: center; padding: 10px;">
+                <h3 id="isolatedvertices" style="text-align: left; margin: 0;">Isolated vertices</h3>
+                <div class="imgcontainer">
+                    <img src="images/isolated vertices/original.png">
+                    <img src="images/isolated vertices/detected.png">
+                    <img src="images/isolated vertices/repaired.png">
+                </div>
+                The original mesh (top-left), detected isolated vertices (top-right), and the repaired mesh (bottom).
+            </div>
+            <div style="background-color: #bbffdd; text-align: center; padding: 10px;">
+                <h3 id="noisesmoothing" style="text-align: left; margin: 0;">Noise smoothing</h3>
+                <div class="imgcontainer">
+                    <img src="images/noise/original 1.png">
+                    <img src="images/noise/detected 1.png">
+                    <img src="images/noise/repaired 1.png">
+                </div>
+                The original mesh (top-left), detected noisy vertices (top-right), and the repaired mesh (bottom). There are several different algorithms for detecting and repairing noise, each of which is outlined below. The "smooth all" option considers all vertices as being noisy, while the "ignore boundaries" option forces vertices on a boundary to not be considered noisy, since they might falsely be considered so. Notice that in the above images, "ignore boundaries" is unchecked, so the boundary maintains its jagged edges.
+                <div class="imgcontainer">
+                    <img src="images/noise/laplacian residual.png">
+                    <img src="images/noise/mean curvature.png">
+                    <img src="images/noise/feature sensitive.png">
+                </div>
+                The three implemented detection algorithms are Laplacian residual (top-left), mean curvature (top-right), and feature sensitive (bottom). The Laplacian residual (normalized Laplacian vector) and mean curvature are both implemented by comparing each vertex's values to the mean and standard deviation of all vertices in the mesh. The upper outliers are considered noisy, according to the "sensitivity" options. The feature sensitive combines the Laplacian residual (positively) and the mean curvature (negatively) in order to only detect true noise, and not sharp feature vertices. Specifically, a vertex is considered noisy its Laplacian residual is an upper outlier but its mean curvature is not. The following table illustrates this relationship:
+                <div style="display: flex; justify-content: center; align-items: center;"><table>
+                    <tr>
+                        <td></td>
+                        <td>High Laplacian residual</td>
+                        <td>Low Laplacian residual</td>
+                    </tr>
+                    <tr>
+                        <td>High mean curvature</td>
+                        <td><i>Likely a sharp feature</i></td>
+                        <td><i>Likely a feature</i></td>
+                    </tr>
+                    <tr>
+                        <td>Low mean curvature</td>
+                        <td><i>Likely true noise</i></td>
+                        <td><i>Smooth - likely no noise</i></td>
+                    </tr>
+                </table></div>
+                The four implemented repairing algorithms are illustrated below. Additionally, the "iterations" parameter can be set to increase how many times the smoothing algorithm is reapplied.
+                <div class="imgcontainer">
+                    <img src="images/noise/laplacian.png">
+                    <img src="images/noise/taubin.png">
+                    <img src="images/noise/desbrun.png">
+                    <img src="images/noise/bilateral.png">
+                </div>
+                The smoothing methods of: Laplacian (top-left), Taubin (top-right), Desbrun (bottom-left), and bilateral (bottom-right). Based on some crude testing comparisons, the bilateral smoothing algorithm seems to be the most efficient and most effective algorithm of these four. Each is described as follows:
+                <div style="text-align: center;"><ul style="display: inline-block;">
+                    <li><i>Laplacian</i>: noisy vertices simply subtract from themselves their laplacian vector times the smoothing factor. It may cause shrinkage.</li>
+                    <li><i>Taubin</i>: similar to Laplacian, but an additional expanding operation is done after every Laplacian smoothing operation to prevent any shrinkage.</li>
+                    <li><i>Desbrun</i>: similar to Laplacian, but prevents shrinkage by preserving volume.</li>
+                    <li><i>Bilateral</i>: a different kind of algorithm that approximates a noisy vertex's displacement to the future noise-free mesh and subtracts it from itself. The algorithm<br>is more involved than the others, but can be explained in much more detailed <a href="https://www.sci.utah.edu/~shachar/Publications/bmd03.pdf">here</a>. Another benefit is that it also does not cause any irregularity,<br>shrinkage, or drifting like the other algorithms might.</li>
+                </ul></div>
+            </div>
+            <div style="background-color: #bbddff; text-align: center; padding: 10px;">
+                <h3 id="nonmanifoldedges" style="text-align: left; margin: 0;">Non-manifold edges</h3>
+                <div class="imgcontainer">
+                    <img src="images/non-manifold edges/original.png">
+                    <img src="images/non-manifold edges/detected.png">
+                </div>
+                The original mesh (left), and the detected non-manifold edges (right). There's no one logical way of dealing with non-manifold edges, so no repair option is provided.
+            </div>
+            <div style="background-color: #bbffdd; text-align: center; padding: 10px;">
+                <h3 id="nullfaces" style="text-align: left; margin: 0;">Null faces</h3>
+                <div class="imgcontainer">
+                    <img src="images/null faces/original.png">
+                    <img src="images/null faces/detected.png">
+                </div>
+                The original mesh (left), and the detected vertices/edges of null faces (right). The repaired mesh looks the exact same as the original mesh. A null face in GeoRepair is defined as a face that has at least 2 duplicate vertices - not in the vertex position sense, but in the vertex index sense. In the above image, a single highlighted vertex is a face with 3 duplicate vertices (i.e. just the one vertex), while a highlighted edge is a face with 2 duplicate vertices and 1 other vertex.
+            </div>
+            <div style="background-color: #bbddff; text-align: center; padding: 10px;">
+                <h3 id="unboundvertices" style="text-align: left; margin: 0;">Unbound vertices</h3>
+                <div class="imgcontainer">
+                    <img src="images/unbound vertices/original.png">
+                    <img src="images/unbound vertices/repaired.png">
+                </div>
+                The original mesh (left), and the repaired mesh (right). The unbound vertices are normally highlighted, but the vertices in the above example are too far out. The 3D bounding box that clamps vertices can be edited in the menu.
+            </div>
+            <div style="background-color: #bbffdd; text-align: center; padding: 10px;">
+                <h3 id="unconnectedsubmeshes" style="text-align: left; margin: 0;">Unconnected submeshes</h3>
+                <div class="imgcontainer">
+                    <img src="images/unconnected submeshes/original.png">
+                    <img src="images/unconnected submeshes/detected.png">
+                </div>
+                The original mesh (left), and the detected submeshes that are connected, but separate from each other (right). There's no one logical way of connecting separated submeshes, so no repair option is provided.
+            </div>
+            <div style="background-color: #bbddff; text-align: center; padding: 10px;">
+                <h3 id="unpatchedholes" style="text-align: left; margin: 0;">Unpatched holes</h3>
+                <div class="imgcontainer">
+                    <img src="images/unpatched holes/original.png">
+                    <img src="images/unpatched holes/detected.png">
+                </div>
+                The original mesh (left), and the detected hole boundaries (right). The "flatten" option applies to boundaries that are not coplanar, for which the patching algorithm attempts to find the flattest triangulation. In total, there are 5 patching methods implemented.
+                <div class="imgcontainer">
+                    <img src="images/unpatched holes/fan.png">
+                    <img src="images/unpatched holes/fan offset.png">
+                </div>
+                The <i>fan</i> method (left), and the <i>fan</i> method with a different offset (right). The offset option changes the initial vertex in the triangulation method, and provides different results as can be seen above. The <i>fan</i> method fans out triangles that consist of adjacent vertices and the initial vertex.
+                <div class="imgcontainer">
+                    <img src="images/unpatched holes/strip.png">
+                    <img src="images/unpatched holes/clip.png">
+                </div>
+                The <i>strip</i> method (left) and the <i>clip</i> method (right). The <i>strip</i> method alternates adjacent vertices on either side of the boundary. The <i>clip</i> method clips vertices along the boundary iteratively, until only a single central triangle remains.
+                <div class="imgcontainer">
+                    <img src="images/unpatched holes/pie.png">
+                    <img src="images/unpatched holes/ear clipping.png">
+                </div>
+                The <i>pie</i> method (left) and the <i>ear clipping</i> method (right). The <i>pie</i> method adds a new vertex at the mean position of the boundary, and fans out using the new vertex as the shared vertex. The <i>ear clipping</i> method is similar to the <i>clip</i> method, but only clips ears (convex vertices [angle &lt; 180] whose near triangle - the triangle formed by it and its two neighbouring vertices - does not contain other reflex vertices [angle >= 180]).
+                <div class="imgcontainer">
+                    <img src="images/unpatched holes/Hole patching methods.png">
+                    <img src="images/unpatched holes/Ear clipping method.png">
+                </div>
+                The first four triangulation methods on an octagon and a septagon (left), and an <a href="https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf"><i>ear clipping</i> triangulation</a> of a concave polygon (right). Only the <i>ear clipping</i> method works well for non-convex polygons. The <i>ear clipping</i> method also provides an "ear cycle" parameter:
+                <div class="imgcontainer">
+                    <img src="images/unpatched holes/ear clipping cycle 1.png">
+                    <img src="images/unpatched holes/ear clipping cycle 2.png">
+                </div>
+                An <i>ear clipping</i> with cycle=0 (left) and cycle=-1 (right). The cycle parameter determines how ears are traversed through the algorithm, i.e. once an ear is clipped, the offset of the next ear that gets clipped.
+            </div>
         </div>
     </body>
 </html>
