@@ -38,3 +38,5 @@ out/*
 # Include Assets
 !assets/*.obj
 /web/Project Video.mp4
+/Project Presentation.pptx
+/Project Report.pdf
