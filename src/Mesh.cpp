@@ -10,10 +10,10 @@
 
 bool Mesh::load(const char* filename)
 {
-	data->primary.mesh_filename = filename;
-
 	if (!igl::read_triangle_mesh(filename, data->primary.V, data->primary.F))
 		return false;
+
+	data->primary.mesh_filename = filename;
 	reset_vertex_colors();
 	reset_face_colors();
 	reset_edge_colors();

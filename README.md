@@ -21,4 +21,4 @@ This project implements several algorithms from different papers/resources. In p
 
 * [Mesh Smoothing](https://graphics.stanford.edu/courses/cs468-12-spring/LectureSlides/06_smoothing.pdf) from Stanford lecture slides.
 * [Bilateral Mesh Denoising](https://www.sci.utah.edu/~shachar/Publications/bmd03.pdf) by Shachar Fleishman, Iddo Drori, and Daniel Cohen-Or from School of Computer cience, Tel Aviv University.
-* [Triangulation by Ear Clipping](https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf) by David Eberly
+* [Triangulation by Ear Clipping](https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf) by David Eberly. Licensed under [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/)

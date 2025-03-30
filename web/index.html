@@ -11,6 +11,21 @@
                 align-items: center;
                 margin: 20px;
             }
+            .yellow {
+                background-color: #eeeedd;
+            }
+            .green {
+                background-color: #ddffee;
+                margin-top: 1em;
+                border-width: 1px;
+                border-style: solid;
+            }
+            .blue {
+                background-color: #ddeeff;
+                margin-top: 1em;
+                border-width: 1px;
+                border-style: solid;
+            }
             img {
                 max-width: 40%;
                 padding: 5px;
@@ -30,11 +45,57 @@
             }
         </style>
     </head>
-    <body style="background-color: #eeeebb;">
-        <h1 style="text-align: center;">GeoRepair</h1>
+    <body class="yellow" style="padding-left: 1%; padding-right: 1%;">
+        <h1 style="text-align: center; font-family: Verdana, Geneva, Tahoma, sans-serif;">GeoRepair</h1>
         <h4 style="text-align: center;">detects and repairs mesh defects</h4>
         <div>
-            <h2>Quick links</h2>
+            <h2>Introduction</h2>
+            <p>
+                GeoRepair is a program built with libIGL, Eigen, and ImGui, that detects and repairs mesh defects. It supports loading and saving most mesh file types, detecting and repairing many different mesh defects (a full list is found <a href="#quicklinks">here</a>), undoing and redoing changes, and visualisation of these defects (successful detection will highlight responsible vertices, faces, and edges). As is detailed further in the <a href="#features">features</a> section, each mesh defect may have multiple configurable parameters as well. Each algorithm is either an implementation I had to derive myself, or the implementation of an existing paper or resource:
+                <ul>
+                    <li><a href="https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf" target="_blank">Triangulation by ear clipping</a></li>
+                    <li><a href="https://www.sci.utah.edu/~shachar/Publications/bmd03.pdf" target="_blank">Bilateral mesh denoising</a></li>
+                    <li><a href="https://graphics.stanford.edu/courses/cs468-12-spring/LectureSlides/06_smoothing.pdf" target="_blank">Mesh smoothing</a></li>
+                </ul>
+                The actual design of the application is split between a front-end menu (using ImGui) and a back-end OOP hierarchy (each defect extends a common Defect base class), making GeoRepair <i>modular</i> and <i>extensible</i>.
+            </p>
+        </div>
+        <hr>
+        <div>
+            <h2>Challenges</h2>
+            <p>
+                The most difficult features to implement were:
+                <ul>
+                    <li>The various noise smoothing algorithms: they were the most mathematically technical.</li>
+                    <li>The algorithms involving duplicate vertices: they required the manual implementation of an <i>EquivalenceClasses</i> data structure.</li>
+                    <li>The ear clipping algorithm: it required a completely separate utility file of a few hundred lines that included the implementation of a complex data structure called <i>EarClippingData</i>. This data structure consists of several interconnected circular and linear linked lists, and thus was very fragile to implement and test. However, the benefit of it was in reducing the time complexity of the overall algorithm from <i>O(n<sup>3</sup>)</i> to <i>O(n<sup>2</sup>)</i>.</li>
+                </ul>
+            </p>
+            <p>
+                My original vision was for GeoRepair to only edit vertex and face data in a mesh file, leaving all other data (like texture coordinates, normals, etc.) untouched. However, this would require writing custom parsing functions for each mesh file type (.obj, .off, .stl, etc.) in order to filter only the vertex and face data. Instead, <i>igl::read_triangle_mesh</i> and <i>igl::write_triangle_mesh</i> were used generically for any file type, resulting in a loss of that extra data and automatic triangulation of all faces. Fortunately, when re-importing the repaired mesh back into a program like Blender, the normals will be recalculated. Additionally, GeoRepair was initially intended to be used before setting up texture coordinates and materials in any case.
+            </p>
+            <p>
+                Another difficulty came from the implementation of a potential selection tool, which I considered adding late into development of the project. LibIGL provides a built-in widget for vertex selection, but not face and edge selection, which would have been used by many of the mesh defects. Face selection in particular would have been challenging to implement, since there would need to be some kind of threshold mechanism for determining whether certain faces should be considered selected in a user box/lasso select. Blender, for instance, displays a dot in the center of each face, and it is that dot that must be selected in order to select the face. In the end, it would have been a large feature to implement, and I was already near the end of the project timeline, so it's also beyond the project's scope.
+            </p>
+        </div>
+        <hr>
+        <div>
+            <h2>Analysis of results</h2>
+            <p>
+                As will be seen in the <a href="#features">features</a> section, many meshes, simple and complex, were tested for proper defect detection and repairing, and performance of the implemented algorithms. In particular, each defect has at least one mesh that has at least one instance of that defect, and some meshes contain multiple types of defects. Performance-wise, GeoRepair can process defects in meshes of at least 20,000 vertices in real time. Additionally, aside from the ear-clipping algorithm, which ended up being quadratic, the time complexity of all algorithms that I implemented (so not necessarily LibIGL's under-the-hood operations like <i>igl::boundary_loop</i>) is linear. In all, all of the implemented algorithms are successful in efficiently and properly detecting and repairing the mesh defects supported by GeoRepair.
+            </p>
+        </div>
+        <hr>
+        <div style="text-align: center;">
+            <h2 style="text-align: left;">Video overview</h2>
+            <video controls width="40%">
+                <source src="Project Video.mp4">
+                Download <a href="/shared-assets/videos/flower.mp4" target="_blank">MP4</a> video.
+            </video>
+        </div>
+        <hr>
+        <div>
+            <h2 id="quicklinks">Feature quick links</h2>
             <ul>
                 <li><a href="#mainviews">Main views</a></li>
                 <li><a href="#degeneratefaces">Degenerate faces</a></li>
@@ -51,9 +112,10 @@
                 <li><a href="#unpatchedholes">Unpatched holes</a></li>
             </ul>
         </div>
+        <hr>
         <div>
-            <h2>Features</h2>
-            <div style="background-color: #bbddff; text-align: center; padding: 10px;">
+            <h2 id="features">Features</h2>
+            <div class="blue" style="text-align: center; padding: 10px;">
                 <h3 id="mainviews" style="text-align: left; margin: 0;">Main views</h3>
                 <div class="imgcontainer">
                     <img src="images/startup.png">
@@ -67,7 +129,7 @@
                 </div>
                 The file menu (top-left) allows the user to load/save a mesh, view the info popup, and open the customization settings (bottom). The customization settings lets the user customize all colors used by in the mesh, as well as vertex sizes and edge lengths. The edit menu (top-right) allows the user to undo (or Ctrl+Z), redo (or Ctrl+Shft+z), clear visualisation (clear all markings made by the detection algorithms), or restore the visualisation.
             </div>
-            <div style="background-color: #bbffdd; text-align: center; padding: 10px;">
+            <div class="green" style="text-align: center; padding: 10px;">
                 <h3 id="degeneratefaces" style="text-align: left; margin: 0;">Degenerate faces</h3>
                 <div class="imgcontainer">
                     <img src="images/degenerate faces/original.png">
@@ -76,7 +138,7 @@
                 </div>
                 The original mesh (top-left), detected vertices responsible for degenerate faces (top-right), and the repaired mesh (bottom). A degenerate face has at least 2 vertices whose distance is within the threshold value. If the "ignore normals" option is unchecked, then two faces that are made up of the same vertices but have different winding orders are considered separate faces and won't be considered as duplicate faces. Otherwise, all duplicate faces minus 1 are considered degenerate faces - there will be one face remaining but all other duplicates with that face are removed. 
             </div>
-            <div style="background-color: #bbddff; text-align: center; padding: 10px;">
+            <div class="blue" style="text-align: center; padding: 10px;">
                 <h3 id="degeneratevertexpatches" style="text-align: left; margin: 0;">Degenerate vertex patches</h3>
                 <div class="imgcontainer">
                     <img src="images/degenerate vertex patches/original.png">
@@ -85,7 +147,7 @@
                 </div>
                 The original mesh (top-left), detected vertices responsible for degenerate vertex patches (top-right), and the repaired mesh (bottom). A degenerate vertex patch is a set of vertices all within the same connected submesh, where any one vertex is within the threshold value of some other vertex in the set. In other words, they are duplicate vertices that lie in the same connected submesh.
             </div>
-            <div style="background-color: #bbffdd; text-align: center; padding: 10px;">
+            <div class="green" style="text-align: center; padding: 10px;">
                 <h3 id="duplicatefaces" style="text-align: left; margin: 0;">Duplicate faces</h3>
                 <div class="imgcontainer">
                     <img src="images/duplicate faces/original.png">
@@ -95,7 +157,7 @@
                 </div>
                 The original mesh (top-left), detected duplicate faces (top-right), and the repaired mesh (bottom-left). Though the repaired mesh looks the same as the original mesh, detecting for duplicate faces on the repaired mesh yields (bottom-right), indicating no defects were found. If the "ignore normals" option is unchecked, then two faces with the same vertices but with different winding orders are not considered duplicates.
             </div>
-            <div style="background-color: #bbddff; text-align: center; padding: 10px;">
+            <div class="blue" style="text-align: center; padding: 10px;">
                 <h3 id="duplicatevertices" style="text-align: left; margin: 0;">Duplicate vertices</h3>
                 <div class="imgcontainer">
                     <img src="images/duplicate vertices/original.png">
@@ -104,7 +166,7 @@
                 </div>
                 The original mesh (top-left), detected duplicate vertices within the tolerance threshold (top-right), and the repaired mesh (bottom).
             </div>
-            <div style="background-color: #bbffdd; text-align: center; padding: 10px;">
+            <div class="green" style="text-align: center; padding: 10px;">
                 <h3 id="invertednormals" style="text-align: left; margin: 0;">Inverted normals</h3>
                 <div class="imgcontainer">
                     <img src="images/inverted normals/original.png">
@@ -114,7 +176,7 @@
                 </div>
                 The original mesh (top-left), detected inverted normals (bottom-left), and the repaired mesh (bottom-right). Note that the visualisation is maintained until cleared, but the faces are all clearly correctly oriented. The "flip all" button flips all normals in the mesh (top-right).
             </div>
-            <div style="background-color: #bbddff; text-align: center; padding: 10px;">
+            <div class="blue" style="text-align: center; padding: 10px;">
                 <h3 id="isolatedvertices" style="text-align: left; margin: 0;">Isolated vertices</h3>
                 <div class="imgcontainer">
                     <img src="images/isolated vertices/original.png">
@@ -123,7 +185,7 @@
                 </div>
                 The original mesh (top-left), detected isolated vertices (top-right), and the repaired mesh (bottom).
             </div>
-            <div style="background-color: #bbffdd; text-align: center; padding: 10px;">
+            <div class="green" style="text-align: center; padding: 10px;">
                 <h3 id="noisesmoothing" style="text-align: left; margin: 0;">Noise smoothing</h3>
                 <div class="imgcontainer">
                     <img src="images/noise/original 1.png">
@@ -166,10 +228,10 @@
                     <li><i>Laplacian</i>: noisy vertices simply subtract from themselves their laplacian vector times the smoothing factor. It may cause shrinkage.</li>
                     <li><i>Taubin</i>: similar to Laplacian, but an additional expanding operation is done after every Laplacian smoothing operation to prevent any shrinkage.</li>
                     <li><i>Desbrun</i>: similar to Laplacian, but prevents shrinkage by preserving volume.</li>
-                    <li><i>Bilateral</i>: a different kind of algorithm that approximates a noisy vertex's displacement to the future noise-free mesh and subtracts it from itself. The algorithm<br>is more involved than the others, but can be explained in much more detailed <a href="https://www.sci.utah.edu/~shachar/Publications/bmd03.pdf">here</a>. Another benefit is that it also does not cause any irregularity,<br>shrinkage, or drifting like the other algorithms might.</li>
+                    <li><i>Bilateral</i>: a different kind of algorithm that approximates a noisy vertex's displacement to the future noise-free mesh and subtracts it from itself. The algorithm<br>is more involved than the others, but can be explained in much more detailed <a href="https://www.sci.utah.edu/~shachar/Publications/bmd03.pdf" target="_blank">here</a>. Another benefit is that it also does not cause any irregularity,<br>shrinkage, or drifting like the other algorithms might.</li>
                 </ul></div>
             </div>
-            <div style="background-color: #bbddff; text-align: center; padding: 10px;">
+            <div class="blue" style="text-align: center; padding: 10px;">
                 <h3 id="nonmanifoldedges" style="text-align: left; margin: 0;">Non-manifold edges</h3>
                 <div class="imgcontainer">
                     <img src="images/non-manifold edges/original.png">
@@ -177,7 +239,7 @@
                 </div>
                 The original mesh (left), and the detected non-manifold edges (right). There's no one logical way of dealing with non-manifold edges, so no repair option is provided.
             </div>
-            <div style="background-color: #bbffdd; text-align: center; padding: 10px;">
+            <div class="green" style="text-align: center; padding: 10px;">
                 <h3 id="nullfaces" style="text-align: left; margin: 0;">Null faces</h3>
                 <div class="imgcontainer">
                     <img src="images/null faces/original.png">
@@ -185,7 +247,7 @@
                 </div>
                 The original mesh (left), and the detected vertices/edges of null faces (right). The repaired mesh looks the exact same as the original mesh. A null face in GeoRepair is defined as a face that has at least 2 duplicate vertices - not in the vertex position sense, but in the vertex index sense. In the above image, a single highlighted vertex is a face with 3 duplicate vertices (i.e. just the one vertex), while a highlighted edge is a face with 2 duplicate vertices and 1 other vertex.
             </div>
-            <div style="background-color: #bbddff; text-align: center; padding: 10px;">
+            <div class="blue" style="text-align: center; padding: 10px;">
                 <h3 id="unboundvertices" style="text-align: left; margin: 0;">Unbound vertices</h3>
                 <div class="imgcontainer">
                     <img src="images/unbound vertices/original.png">
@@ -193,7 +255,7 @@
                 </div>
                 The original mesh (left), and the repaired mesh (right). The unbound vertices are normally highlighted, but the vertices in the above example are too far out. The 3D bounding box that clamps vertices can be edited in the menu.
             </div>
-            <div style="background-color: #bbffdd; text-align: center; padding: 10px;">
+            <div class="green" style="text-align: center; padding: 10px;">
                 <h3 id="unconnectedsubmeshes" style="text-align: left; margin: 0;">Unconnected submeshes</h3>
                 <div class="imgcontainer">
                     <img src="images/unconnected submeshes/original.png">
@@ -201,7 +263,7 @@
                 </div>
                 The original mesh (left), and the detected submeshes that are connected, but separate from each other (right). There's no one logical way of connecting separated submeshes, so no repair option is provided.
             </div>
-            <div style="background-color: #bbddff; text-align: center; padding: 10px;">
+            <div class="blue" style="text-align: center; padding: 10px;">
                 <h3 id="unpatchedholes" style="text-align: left; margin: 0;">Unpatched holes</h3>
                 <div class="imgcontainer">
                     <img src="images/unpatched holes/original.png">
@@ -227,7 +289,7 @@
                     <img src="images/unpatched holes/Hole patching methods.png">
                     <img src="images/unpatched holes/Ear clipping method.png">
                 </div>
-                The first four triangulation methods on an octagon and a septagon (left), and an <a href="https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf"><i>ear clipping</i> triangulation</a> of a concave polygon (right). Only the <i>ear clipping</i> method works well for non-convex polygons. The <i>ear clipping</i> method also provides an "ear cycle" parameter:
+                The first four triangulation methods on an octagon and a septagon (left), and an <a href="https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf" target="_blank"><i>ear clipping</i> triangulation</a> of a concave polygon (right). Only the <i>ear clipping</i> method works well for non-convex polygons. The <i>ear clipping</i> method also provides an "ear cycle" parameter:
                 <div class="imgcontainer">
                     <img src="images/unpatched holes/ear clipping cycle 1.png">
                     <img src="images/unpatched holes/ear clipping cycle 2.png">
