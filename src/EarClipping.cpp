@@ -5,12 +5,13 @@
 struct Node;
 struct EarClippingData
 {
-	std::shared_ptr<Node> head_polygon = nullptr;
-	std::shared_ptr<Node> head_convex = nullptr;
-	std::shared_ptr<Node> tail_convex = nullptr;
-	std::shared_ptr<Node> head_reflex = nullptr;
-	std::shared_ptr<Node> tail_reflex = nullptr;
-	std::shared_ptr<Node> head_ear = nullptr;
+	std::vector<std::shared_ptr<Node>> nodes;
+	std::weak_ptr<Node> head_polygon;
+	std::weak_ptr<Node> head_convex;
+	std::weak_ptr<Node> tail_convex;
+	std::weak_ptr<Node> head_reflex;
+	std::weak_ptr<Node> tail_reflex;
+	std::weak_ptr<Node> head_ear;
 	size_t size = 0;
 	Eigen::RowVector3d normal;
 	const Eigen::MatrixXd* vertices;
@@ -23,20 +24,20 @@ struct Node
 	Node(Eigen::Index v) : v(v) {}
 
 	// cyclical
-	std::shared_ptr<Node> next_vertex = nullptr;
-	std::shared_ptr<Node> prev_vertex = nullptr;
+	std::weak_ptr<Node> next_vertex;
+	std::weak_ptr<Node> prev_vertex;
 
 	bool is_reflex = false;
 	bool is_ear = false;
 	// linear
-	std::shared_ptr<Node> next_convex = nullptr;
-	std::shared_ptr<Node> prev_convex = nullptr;
+	std::weak_ptr<Node> next_convex;
+	std::weak_ptr<Node> prev_convex;
 	// linear
-	std::shared_ptr<Node> next_reflex = nullptr;
-	std::shared_ptr<Node> prev_reflex = nullptr;
+	std::weak_ptr<Node> next_reflex;
+	std::weak_ptr<Node> prev_reflex;
 	// cyclical
-	std::shared_ptr<Node> next_ear = nullptr;
-	std::shared_ptr<Node> prev_ear = nullptr;
+	std::weak_ptr<Node> next_ear;
+	std::weak_ptr<Node> prev_ear;
 
 	struct Triangle
 	{
@@ -45,7 +46,12 @@ struct Node
 
 	Triangle triangle(const EarClippingData& data) const
 	{
-		return Triangle{ data.vertices->row(v), data.vertices->row(prev_vertex->v), data.vertices->row(next_vertex->v) };
+		return Triangle{ data.vertices->row(v), data.vertices->row(prev_vertex.lock()->v), data.vertices->row(next_vertex.lock()->v)};
+	}
+
+	Eigen::RowVector3i face() const
+	{
+		return Eigen::RowVector3i(prev_vertex.lock()->v, v, next_vertex.lock()->v);
 	}
 
 	bool should_be_reflexive(const EarClippingData& data) const
@@ -59,7 +65,8 @@ struct Node
 		if (is_reflex)
 			return false;
 		auto tr = triangle(data);
-		for (auto tester = next_vertex->next_vertex; tester != prev_vertex; tester = tester->next_vertex)
+		auto pv = prev_vertex.lock();
+		for (auto tester = next_vertex.lock()->next_vertex.lock(); tester != pv; tester = tester->next_vertex.lock())
 		{
 			if (tester->should_be_reflexive(data))
 			{
@@ -74,71 +81,74 @@ struct Node
 static std::shared_ptr<Node> append_vertex(EarClippingData& data, Eigen::Index v)
 {
 	std::shared_ptr<Node> insert = std::make_shared<Node>(v);
-	if (data.head_polygon == nullptr)
+	data.nodes.push_back(insert);
+	if (auto hp = data.head_polygon.lock())
 	{
-		data.head_polygon = insert;
-		data.head_polygon->next_vertex = data.head_polygon;
-		data.head_polygon->prev_vertex = data.head_polygon;
-	}
-	else
-	{
-		const std::shared_ptr<Node>& tail = data.head_polygon->prev_vertex;
+		const std::shared_ptr<Node>& tail = hp->prev_vertex.lock();
 		insert->prev_vertex = tail;
 		tail->next_vertex = insert;
 		insert->next_vertex = data.head_polygon;
-		data.head_polygon->prev_vertex = insert;
+		hp->prev_vertex = insert;
+	}
+	else
+	{
+		data.head_polygon = insert;
+		hp = data.head_polygon.lock();
+		hp->next_vertex = data.head_polygon;
+		hp->prev_vertex = data.head_polygon;
 	}
 	return insert;
 }
 
 static void append_reflex(EarClippingData& data, const std::shared_ptr<Node>& insert)
 {
-	if (data.head_reflex == nullptr)
+	if (data.head_reflex.lock())
 	{
-		data.head_reflex = insert;
+		data.tail_reflex.lock()->next_reflex = insert;
+		insert->prev_reflex = data.tail_reflex;
 		data.tail_reflex = insert;
 	}
 	else
 	{
-		data.tail_reflex->next_reflex = insert;
-		insert->prev_reflex = data.tail_reflex;
+		data.head_reflex = insert;
 		data.tail_reflex = insert;
 	}
 }
 
 static void append_convex(EarClippingData& data, const std::shared_ptr<Node>& insert)
 {
-	if (data.head_convex == nullptr)
+	if (data.head_convex.lock())
 	{
-		data.head_convex = insert;
+		data.tail_convex.lock()->next_convex = insert;
+		insert->prev_convex = data.tail_convex;
 		data.tail_convex = insert;
 	}
 	else
 	{
-		data.tail_convex->next_convex = insert;
-		insert->prev_convex = data.tail_convex;
+		data.head_convex = insert;
 		data.tail_convex = insert;
 	}
 }
 
 static void append_ear(EarClippingData& data, const std::shared_ptr<Node>& insert)
 {
-	if (data.head_ear == nullptr)
+	if (auto he = data.head_ear.lock())
 	{
-		data.head_ear = insert;
-		data.head_ear->next_ear = data.head_ear;
-		data.head_ear->prev_ear = data.head_ear;
-	}
-	else
-	{
-		const std::shared_ptr<Node>& tail = data.head_ear->prev_ear;
+		const std::shared_ptr<Node>& tail = he->prev_ear.lock();
 		insert->prev_ear = tail;
 		tail->next_ear = insert;
 		insert->next_ear = data.head_ear;
-		data.head_ear->prev_ear= insert;
+		he->prev_ear = insert;
+	}
+	else
+	{
+		data.head_ear = insert;
+		he = data.head_ear.lock();
+		he->next_ear = data.head_ear;
+		he->prev_ear = data.head_ear;
 	}
 }
-static void update_adjacent(std::shared_ptr<Node>& adj, EarClippingData& data)
+static void update_adjacent(EarClippingData& data, const std::shared_ptr<Node>& adj)
 {
 	// note that if an adjacent vertex is convex, it will remain convex after removing ear.
 	if (adj->is_reflex)
@@ -152,24 +162,24 @@ static void update_adjacent(std::shared_ptr<Node>& adj, EarClippingData& data)
 			append_convex(data, adj);
 
 			// remove from reflexive
-			if (data.head_reflex == adj)
+			if (data.head_reflex.lock() == adj)
 			{
-				if (data.tail_reflex == adj)
-					data.tail_reflex = nullptr;
+				if (data.tail_reflex.lock() == adj)
+					data.tail_reflex.reset();
 				else
-					adj->next_reflex->prev_reflex = nullptr;
+					adj->next_reflex.lock()->prev_reflex.reset();
 				data.head_reflex = adj->next_reflex;
 			}
 			else
 			{
-				if (data.tail_reflex == adj)
+				if (data.tail_reflex.lock() == adj)
 					data.tail_reflex = adj->prev_reflex;
 				else
-					adj->next_reflex->prev_reflex = adj->prev_reflex;
-				adj->prev_reflex->next_reflex = adj->next_reflex;
+					adj->next_reflex.lock()->prev_reflex = adj->prev_reflex;
+				adj->prev_reflex.lock()->next_reflex = adj->next_reflex;
 			}
-			adj->next_reflex = nullptr;
-			adj->prev_reflex = nullptr;
+			adj->next_reflex.reset();
+			adj->prev_reflex.reset();
 		}
 	}
 
@@ -188,39 +198,40 @@ static void update_adjacent(std::shared_ptr<Node>& adj, EarClippingData& data)
 			adj->is_ear = false;
 
 			// remove from ear
-			if (adj == data.head_ear)
+			if (adj == data.head_ear.lock())
 			{
-				if (adj->next_ear == data.head_ear)
-					data.head_ear = nullptr;
+				if (adj->next_ear.lock() == adj)
+					data.head_ear.reset();
 				else
 				{
-					adj->next_ear->prev_ear = adj->prev_ear;
-					adj->prev_ear->next_ear = adj->next_ear;
+					adj->next_ear.lock()->prev_ear = adj->prev_ear;
+					adj->prev_ear.lock()->next_ear = adj->next_ear;
 					data.head_ear = adj->next_ear;
 				}
 			}
 			else
 			{
-				adj->next_ear->prev_ear = adj->prev_ear;
-				adj->prev_ear->next_ear = adj->next_ear;
+				adj->next_ear.lock()->prev_ear = adj->prev_ear;
+				adj->prev_ear.lock()->next_ear = adj->next_ear;
 			}
-			adj->next_ear = nullptr;
-			adj->prev_ear = nullptr;
+			adj->next_ear.reset();
+			adj->prev_ear.reset();
 		}
 	}
 };
 
 static void recompute_normal(EarClippingData& data)
 {
-	std::shared_ptr<Node> indexer = data.head_polygon;
+	std::shared_ptr<Node> indexer = data.head_polygon.lock();
 	data.normal.setZero();
+	auto hp = data.head_polygon.lock();
 	do
 	{
 		auto triangle = indexer->triangle(data);
 		data.normal += (triangle.root - triangle.next).cross(triangle.root + triangle.next);
 
-		indexer = indexer->next_vertex;
-	} while (indexer != data.head_polygon);
+		indexer = indexer->next_vertex.lock();
+	} while (indexer != hp);
 	data.normal.normalize();
 }
 
@@ -228,95 +239,99 @@ static void remove_ear(EarClippingData& data, std::shared_ptr<Node> remove, bool
 {
 	assert(remove->is_ear);
 	// remove from polygon
-	if (remove == data.head_polygon)
+	auto hp = data.head_polygon.lock();
+	if (remove == hp)
 	{
-		if (data.head_polygon->next_vertex == data.head_polygon)
-			data.head_polygon = nullptr;
+		if (hp->next_vertex.lock() == hp)
+			data.head_polygon.reset();
 		else
 		{
 			data.head_polygon = remove->next_vertex;
-			remove->next_vertex->prev_vertex = remove->prev_vertex;
-			remove->prev_vertex->next_vertex = remove->next_vertex;
+			remove->next_vertex.lock()->prev_vertex = remove->prev_vertex;
+			remove->prev_vertex.lock()->next_vertex = remove->next_vertex;
 		}
 	}
 	else
 	{
-		remove->next_vertex->prev_vertex = remove->prev_vertex;
-		remove->prev_vertex->next_vertex = remove->next_vertex;
+		remove->next_vertex.lock()->prev_vertex = remove->prev_vertex;
+		remove->prev_vertex.lock()->next_vertex = remove->next_vertex;
 	}
 	// remove from reflex
 	if (remove->is_reflex)
 	{
-		if (remove == data.head_reflex)
+		auto hr = data.head_reflex.lock();
+		if (remove == hr)
 		{
-			if (data.head_reflex->next_reflex == data.head_reflex)
-				data.head_reflex = nullptr;
+			if (hr->next_reflex.lock() == hr)
+				data.head_reflex.reset();
 			else
 			{
 				data.head_reflex = remove->next_reflex;
-				remove->next_reflex->prev_vertex = nullptr;
+				remove->next_reflex.lock()->prev_vertex.reset();
 			}
 		}
 		else
 		{
-			std::shared_ptr<Node> following = remove->next_reflex;
+			std::shared_ptr<Node> following = remove->next_reflex.lock();
 			if (following != nullptr)
 				following->prev_reflex = remove->prev_reflex;
-			remove->prev_reflex->next_reflex = following;
+			remove->prev_reflex.lock()->next_reflex = following;
 		}
-		remove->next_reflex = nullptr;
-		remove->prev_reflex = nullptr;
+		remove->next_reflex.reset();
+		remove->prev_reflex.reset();
 	}
 	// remove from convex
 	else
 	{
-		if (remove == data.head_convex)
+		auto hc = data.head_convex.lock();
+		if (remove == hc)
 		{
-			if (data.head_convex->next_convex == data.head_convex)
-				data.head_convex = nullptr;
+			if (hc->next_convex.lock() == hc)
+				data.head_convex.reset();
 			else
 			{
 				data.head_convex = remove->next_convex;
-				remove->next_convex->prev_convex = nullptr;
+				remove->next_convex.lock()->prev_convex.reset();
 			}
 		}
 		else
 		{
-			std::shared_ptr<Node> following = remove->next_convex;
+			std::shared_ptr<Node> following = remove->next_convex.lock();
 			if (following != nullptr)
 				following->prev_convex = remove->prev_convex;
-			remove->prev_convex->next_convex = following;
+			remove->prev_convex.lock()->next_convex = following;
 		}
-		remove->next_convex = nullptr;
-		remove->prev_convex = nullptr;
+		remove->next_convex.reset();
+		remove->prev_convex.reset();
 	}
 	// remove from ears
-	if (remove == data.head_ear)
+	auto he = data.head_ear.lock();
+	if (remove == he)
 	{
-		if (data.head_ear->next_ear == data.head_ear)
-			data.head_ear = nullptr;
+		if (he->next_ear.lock() == he)
+			data.head_ear.reset();
 		else
 		{
-			remove->next_ear->prev_ear = remove->prev_ear;
-			remove->prev_ear->next_ear = remove->next_ear;
+			remove->next_ear.lock()->prev_ear = remove->prev_ear;
+			remove->prev_ear.lock()->next_ear = remove->next_ear;
 			data.head_ear = remove->next_ear;
 		}
 	}
 	else
 	{
-		remove->next_ear->prev_ear = remove->prev_ear;
-		remove->prev_ear->next_ear = remove->next_ear;
+		remove->next_ear.lock()->prev_ear = remove->prev_ear;
+		remove->prev_ear.lock()->next_ear = remove->next_ear;
 	}
-	remove->next_ear = nullptr;
-	remove->prev_ear = nullptr;
+	remove->next_ear.reset();
+	remove->prev_ear.reset();
 
 	// update categorization of adjacent vertices
-	update_adjacent(remove->next_vertex, data);
-	update_adjacent(remove->prev_vertex, data);
+	update_adjacent(data, remove->next_vertex.lock());
+	update_adjacent(data, remove->prev_vertex.lock());
 	if (flatten)
 		recompute_normal(data);
-	remove->next_vertex = nullptr;
-	remove->prev_vertex = nullptr;
+	remove->next_vertex.reset();
+	remove->prev_vertex.reset();
 	--data.size;
 }
 
@@ -339,7 +354,7 @@ void ear_clipping(const std::vector<Eigen::Index>& boundary, const Eigen::Matrix
 
 	recompute_normal(data);
 
-	std::shared_ptr<Node> indexer = data.head_polygon;
+	std::shared_ptr<Node> indexer = data.head_polygon.lock();
 	// categorize initial vertices
 	do
 	{
@@ -359,28 +374,28 @@ void ear_clipping(const std::vector<Eigen::Index>& boundary, const Eigen::Matrix
 			}
 		}
 
-		indexer = indexer->next_vertex;
-	} while (indexer != data.head_polygon);
+		indexer = indexer->next_vertex.lock();
+	} while (indexer != data.head_polygon.lock());
 
 	// remove ears and form faces
 	if (ear_cycle == 0)
 	{
 		while (data.size > 3)
 		{
-			Eigen::RowVector3i face(data.head_ear->prev_vertex->v, data.head_ear->v, data.head_ear->next_vertex->v);
+			Eigen::RowVector3i face = data.head_ear.lock()->face();
 			add_faces.push_back(increasing ? face : face.reverse());
-			remove_ear(data, data.head_ear, flatten);
+			remove_ear(data, data.head_ear.lock(), flatten);
 		}
 	}
 	else if (ear_cycle > 0)
 	{
-		std::shared_ptr<Node> indexer = data.head_ear;
+		std::shared_ptr<Node> indexer = data.head_ear.lock();
 		while (data.size > 3)
 		{
 			std::shared_ptr<Node> next_indexer = indexer;
 			for (int i = 0; i < ear_cycle; ++i)
-				next_indexer = next_indexer->next_ear;
-			Eigen::RowVector3i face(indexer->prev_vertex->v, indexer->v, indexer->next_vertex->v);
+				next_indexer = next_indexer->next_ear.lock();
+			Eigen::RowVector3i face = indexer->face();
 			add_faces.push_back(increasing ? face : face.reverse());
 			remove_ear(data, indexer, flatten);
 			indexer = next_indexer;
@@ -388,19 +403,19 @@ void ear_clipping(const std::vector<Eigen::Index>& boundary, const Eigen::Matrix
 	}
 	else // if (ear_cycle < 0)
 	{
-		std::shared_ptr<Node> indexer = data.head_ear;
+		std::shared_ptr<Node> indexer = data.head_ear.lock();
 		while (data.size > 3)
 		{
 			std::shared_ptr<Node> prev_indexer = indexer;
 			for (int i = 0; i > ear_cycle; --i)
-				prev_indexer = prev_indexer->prev_ear;
-			Eigen::RowVector3i face(indexer->prev_vertex->v, indexer->v, indexer->next_vertex->v);
+				prev_indexer = prev_indexer->prev_ear.lock();
+			Eigen::RowVector3i face = indexer->face();
 			add_faces.push_back(increasing ? face : face.reverse());
 			remove_ear(data, indexer, flatten);
 			indexer = prev_indexer;
 		}
 	}
 	// final face
-	Eigen::RowVector3i face(data.head_ear->prev_vertex->v, data.head_ear->v, data.head_ear->next_vertex->v);
+	Eigen::RowVector3i face = data.head_ear.lock()->face();
 	add_faces.push_back(increasing ? face : face.reverse());
 }
